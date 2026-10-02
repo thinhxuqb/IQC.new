@@ -1,5 +1,5 @@
 ; =========================================================================
-; NSIS Installer Script for IQC by ThinhXu
+; NSIS Installer Script for IQC by ThinhXu (100% Offline & Native Desktop)
 ; =========================================================================
 
 Name "IQC by ThinhXu"
@@ -14,16 +14,9 @@ Page instfiles
 Section "Install"
   SetOutPath "$INSTDIR"
 
-  ; Extract app files
+  ; Extract app files (including dist, server.ps1, launch.bat)
   File /r "dist\*.*"
   File "public\favicon.ico"
-
-  ; Create launcher script in installation directory
-  FileOpen $0 "$INSTDIR\launch.bat" w
-  FileWrite $0 "@echo off$\r$\n"
-  FileWrite $0 "chcp 65001 >nul$\r$\n"
-  FileWrite $0 "start msedge --app=https://ais-pre-dgukwgbcuat3e2kdmts5dq-470030224320.asia-southeast1.run.app || start chrome --app=https://ais-pre-dgukwgbcuat3e2kdmts5dq-470030224320.asia-southeast1.run.app || start $\"$INSTDIR\index.html$\"$\r$\n"
-  FileClose $0
 
   ; Create Desktop Shortcut
   CreateShortcut "$DESKTOP\IQC by ThinhXu.lnk" "$INSTDIR\launch.bat" "" "$INSTDIR\favicon.ico" 0 SW_SHOWMINIMIZED
