@@ -196,28 +196,32 @@ export const WindowsInstallModal: React.FC<WindowsInstallModalProps> = ({
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 pt-1">
+                <a
+                  href="https://github.com/thinhxuqb/IQC.new/releases/download/v1.0.0/IQC-by-ThinhXu-Setup-v1.0.0.exe"
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Tải Bộ Cài Setup.exe (307 KB)</span>
+                </a>
+                <a
+                  href="https://github.com/thinhxuqb/IQC.new/releases/download/v1.0.0/IQC-by-ThinhXu-Portable.exe"
+                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Tải Bản Portable.exe (90 KB)</span>
+                </a>
                 {onOpenUpdateModal && (
                   <button
                     onClick={() => {
                       onClose();
                       onOpenUpdateModal();
                     }}
-                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                    className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Kiểm Tra Bản Cập Nhật</span>
+                    <RefreshCw className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Kiểm Tra Cập Nhật</span>
                   </button>
                 )}
-                <a
-                  href="https://github.com/thinhxuqb/IQC.new/releases"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Trang Tải EXE GitHub</span>
-                  <ExternalLink className="w-3 h-3 text-slate-400" />
-                </a>
               </div>
             </div>
           </div>

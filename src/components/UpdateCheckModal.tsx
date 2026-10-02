@@ -216,26 +216,41 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
               </div>
 
               {/* Direct Download .exe link for another Windows PC */}
-              <div className="p-4 bg-indigo-50/60 border border-indigo-200 rounded-xl space-y-2">
+              <div className="p-4 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
                     <Package className="w-4 h-4 text-indigo-600" />
-                    <span>Tải file cài đặt Windows (.exe) từ GitHub</span>
+                    <span>Tải file cài đặt Windows (.exe) trực tiếp:</span>
                   </span>
                 </div>
                 <p className="text-xs text-slate-600">
-                  Bạn có thể tải trực tiếp bộ cài đặt Windows độc lập để cài đặt cho các máy tính phòng xét nghiệm khác.
+                  Chọn định dạng bạn muốn tải về máy tính Windows:
                 </p>
-                <div className="pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <a
+                    href="https://github.com/thinhxuqb/IQC.new/releases/download/v1.0.0/IQC-by-ThinhXu-Setup-v1.0.0.exe"
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors cursor-pointer text-center"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Bộ Cài Setup (.exe)</span>
+                  </a>
+                  <a
+                    href="https://github.com/thinhxuqb/IQC.new/releases/download/v1.0.0/IQC-by-ThinhXu-Portable.exe"
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white hover:bg-slate-50 text-indigo-900 border border-indigo-300 rounded-lg text-xs font-bold shadow-2xs transition-colors cursor-pointer text-center"
+                  >
+                    <Download className="w-4 h-4 text-indigo-600" />
+                    <span>Bản Portable (.exe)</span>
+                  </a>
+                </div>
+                <div className="pt-1 text-center">
                   <a
                     href={`https://github.com/${GITHUB_REPO}/releases`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                    className="text-[11px] text-slate-500 hover:text-indigo-700 underline inline-flex items-center gap-1"
                   >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Mở GitHub Releases để tải .exe</span>
-                    <ExternalLink className="w-3 h-3 ml-0.5" />
+                    <span>Xem toàn bộ danh sách phiên bản trên GitHub Releases</span>
+                    <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
               </div>
