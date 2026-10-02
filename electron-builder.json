@@ -1,0 +1,38 @@
+{
+  "appId": "com.thinhxu.iqc",
+  "productName": "IQC by ThinhXu",
+  "directories": {
+    "output": "dist-electron"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/**/*",
+    "public/**/*",
+    "package.json"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "public/pwa-512x512.png"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "IQC by ThinhXu"
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "thinhxuqb",
+    "repo": "IQC.new"
+  }
+}

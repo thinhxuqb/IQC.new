@@ -10,7 +10,8 @@ import {
   CloudOff, 
   User, 
   AlertTriangle,
-  Monitor
+  Monitor,
+  RefreshCw
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -22,6 +23,7 @@ interface HeaderProps {
   pendingSyncCount: number;
   unresolvedCapaCount: number;
   onOpenWindowsInstall?: () => void;
+  onOpenUpdateModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -33,6 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
   pendingSyncCount,
   unresolvedCapaCount,
   onOpenWindowsInstall,
+  onOpenUpdateModal,
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Bảng điều khiển', icon: Activity },
@@ -120,6 +123,18 @@ export const Header: React.FC<HeaderProps> = ({
                 <Monitor className="w-3.5 h-3.5 text-cyan-600" />
                 <span className="hidden sm:inline">Cài Windows App</span>
                 <span className="sm:hidden">Cài App</span>
+              </button>
+            )}
+
+            {/* Check for Updates Button */}
+            {onOpenUpdateModal && (
+              <button
+                onClick={onOpenUpdateModal}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50/90 hover:bg-indigo-100 text-indigo-800 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
+                title="Kiểm tra bản cập nhật mới từ GitHub Releases & tải file .exe"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-indigo-600" />
+                <span className="hidden lg:inline">Cập nhật</span>
               </button>
             )}
 

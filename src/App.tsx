@@ -32,6 +32,8 @@ import { CapaModal } from './components/CapaModal';
 import { ManualEntryModal } from './components/ManualEntryModal';
 import { QCReportModal } from './components/QCReportModal';
 import { WindowsInstallModal } from './components/WindowsInstallModal';
+import { UpdateCheckModal } from './components/UpdateCheckModal';
+import { checkGitHubReleaseUpdate } from './services/updateService';
 import { 
   AlertTriangle, 
   Activity, 
@@ -58,6 +60,7 @@ export default function App() {
   const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
   const [isWindowsInstallOpen, setIsWindowsInstallOpen] = useState<boolean>(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
 
   // Toast thông báo tức thì khi máy truyền kết quả vi phạm
   const [activeAlert, setActiveAlert] = useState<{
@@ -78,6 +81,21 @@ export default function App() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
+  }, []);
+
+  // Tự động kiểm tra bản cập nhật mới trên GitHub khi khởi động ứng dụng
+  useEffect(() => {
+    const autoCheck = localStorage.getItem('iqc_auto_check_update') !== 'false';
+    if (autoCheck) {
+      const timer = setTimeout(() => {
+        checkGitHubReleaseUpdate().then((info) => {
+          if (info.hasUpdate) {
+            setIsUpdateModalOpen(true);
+          }
+        }).catch(() => {});
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   // Đếm số sự cố CAPA chưa hoàn tất
@@ -200,6 +218,7 @@ export default function App() {
         pendingSyncCount={pendingSyncCount}
         unresolvedCapaCount={unresolvedCapaCount}
         onOpenWindowsInstall={() => setIsWindowsInstallOpen(true)}
+        onOpenUpdateModal={() => setIsUpdateModalOpen(true)}
       />
 
       {/* Instant Westgard Incident Alert Toast */}
@@ -452,6 +471,12 @@ export default function App() {
       <WindowsInstallModal
         isOpen={isWindowsInstallOpen}
         onClose={() => setIsWindowsInstallOpen(false)}
+        onOpenUpdateModal={() => setIsUpdateModalOpen(true)}
+      />
+
+      <UpdateCheckModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
       />
     </div>
   );

@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
-import { Download, Monitor, CheckCircle2, Copy, Check, ExternalLink, X, Laptop } from 'lucide-react';
+import { Download, Monitor, CheckCircle2, Copy, Check, ExternalLink, X, Laptop, RefreshCw, Package } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface WindowsInstallModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenUpdateModal?: () => void;
 }
 
-export const WindowsInstallModal: React.FC<WindowsInstallModalProps> = ({ isOpen, onClose }) => {
+export const WindowsInstallModal: React.FC<WindowsInstallModalProps> = ({ 
+  isOpen, 
+  onClose,
+  onOpenUpdateModal
+}) => {
   const { isInstallable, isInstalled, install } = usePWAInstall();
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCmd, setCopiedCmd] = useState(false);
@@ -173,6 +178,48 @@ export const WindowsInstallModal: React.FC<WindowsInstallModalProps> = ({ isOpen
             <p className="text-[11px] text-slate-500 italic">
               * Nhấn tổ hợp phím <strong>Windows + R</strong>, dán lệnh trên vào và Enter để mở ngay như một phần mềm Desktop độc lập không có thanh địa chỉ duyệt web.
             </p>
+          </div>
+
+          {/* Section 4: File cài đặt Windows .exe & Tự động Cập nhật */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+              4. Tải file cài đặt .exe độc lập & Kiểm tra cập nhật:
+            </label>
+            <div className="bg-gradient-to-r from-indigo-50/80 to-slate-50 border border-indigo-200 rounded-xl p-3.5 space-y-3">
+              <div className="flex items-start gap-2.5">
+                <Package className="w-5 h-5 text-indigo-700 shrink-0 mt-0.5" />
+                <div className="text-xs">
+                  <p className="font-semibold text-slate-900">File cài đặt Windows EXE & Tự động cập nhật</p>
+                  <p className="text-slate-600 mt-0.5">
+                    Tải file <code className="bg-indigo-100 text-indigo-900 px-1 py-0.5 rounded font-mono text-[10px]">IQC-by-ThinhXu-Setup.exe</code> trực tiếp từ GitHub Releases hoặc bấm kiểm tra phiên bản mới.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                {onOpenUpdateModal && (
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onOpenUpdateModal();
+                    }}
+                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Kiểm Tra Bản Cập Nhật</span>
+                  </button>
+                )}
+                <a
+                  href="https://github.com/thinhxuqb/IQC.new/releases"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Trang Tải EXE GitHub</span>
+                  <ExternalLink className="w-3 h-3 text-slate-400" />
+                </a>
+              </div>
+            </div>
           </div>
 
         </div>
