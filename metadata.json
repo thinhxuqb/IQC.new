@@ -1,0 +1,6 @@
+{
+  "name": "Hệ Thống Quản Lý Nội Kiểm Xét Nghiệm QC - ISO 15189",
+  "description": "Phần mềm quản lý QC xét nghiệm y khoa thông minh, biểu đồ Levey-Jennings, cảnh báo quy tắc Westgard tự động, kết nối tín hiệu máy AU400, Sysmex 800, Cobas e411, xuất báo cáo PDF và đồng bộ đám mây ngoại tuyến.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
