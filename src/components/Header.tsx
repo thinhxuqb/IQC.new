@@ -9,7 +9,8 @@ import {
   CloudCheck, 
   CloudOff, 
   User, 
-  AlertTriangle 
+  AlertTriangle,
+  Monitor
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -20,6 +21,7 @@ interface HeaderProps {
   isOnline: boolean;
   pendingSyncCount: number;
   unresolvedCapaCount: number;
+  onOpenWindowsInstall?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -30,6 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
   isOnline,
   pendingSyncCount,
   unresolvedCapaCount,
+  onOpenWindowsInstall,
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Bảng điều khiển', icon: Activity },
@@ -106,6 +109,19 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+
+            {/* Windows Desktop App Install Button */}
+            {onOpenWindowsInstall && (
+              <button
+                onClick={onOpenWindowsInstall}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-cyan-200 bg-cyan-50/90 hover:bg-cyan-100 text-cyan-800 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
+                title="Cài đặt trên máy tính Windows (Desktop App)"
+              >
+                <Monitor className="w-3.5 h-3.5 text-cyan-600" />
+                <span className="hidden sm:inline">Cài Windows App</span>
+                <span className="sm:hidden">Cài App</span>
+              </button>
+            )}
 
             {/* User Profile & Role Switcher */}
             <button

@@ -11,7 +11,8 @@ import {
   ArrowRight, 
   Server, 
   TrendingUp,
-  ShieldCheck
+  ShieldCheck,
+  Monitor
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -25,6 +26,7 @@ interface DashboardViewProps {
   onOpenReceiver: () => void;
   onOpenReport: () => void;
   onOpenCapaList: () => void;
+  onOpenWindowsInstall?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -38,6 +40,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenReceiver,
   onOpenReport,
   onOpenCapaList,
+  onOpenWindowsInstall,
 }) => {
   const [selectedInstFilter, setSelectedInstFilter] = useState<'ALL' | InstrumentId>('ALL');
 
@@ -153,6 +156,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <FileText className="w-3.5 h-3.5 text-slate-300" />
             <span>Xuất Báo Cáo PDF</span>
           </button>
+          {onOpenWindowsInstall && (
+            <button
+              onClick={onOpenWindowsInstall}
+              className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+            >
+              <Monitor className="w-3.5 h-3.5" />
+              <span>Cài Vào Windows</span>
+            </button>
+          )}
         </div>
       </div>
 

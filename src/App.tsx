@@ -31,6 +31,7 @@ import { UserRoleSwitcherModal } from './components/UserRoleSwitcherModal';
 import { CapaModal } from './components/CapaModal';
 import { ManualEntryModal } from './components/ManualEntryModal';
 import { QCReportModal } from './components/QCReportModal';
+import { WindowsInstallModal } from './components/WindowsInstallModal';
 import { 
   AlertTriangle, 
   Activity, 
@@ -56,6 +57,7 @@ export default function App() {
   const [selectedResultForCapa, setSelectedResultForCapa] = useState<QCResult | null>(null);
   const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
+  const [isWindowsInstallOpen, setIsWindowsInstallOpen] = useState<boolean>(false);
 
   // Toast thông báo tức thì khi máy truyền kết quả vi phạm
   const [activeAlert, setActiveAlert] = useState<{
@@ -197,6 +199,7 @@ export default function App() {
         isOnline={isOnline}
         pendingSyncCount={pendingSyncCount}
         unresolvedCapaCount={unresolvedCapaCount}
+        onOpenWindowsInstall={() => setIsWindowsInstallOpen(true)}
       />
 
       {/* Instant Westgard Incident Alert Toast */}
@@ -275,6 +278,7 @@ export default function App() {
             onOpenReceiver={() => setCurrentTab('receiver')}
             onOpenReport={() => setIsReportModalOpen(true)}
             onOpenCapaList={() => setCurrentTab('capa')}
+            onOpenWindowsInstall={() => setIsWindowsInstallOpen(true)}
           />
         )}
 
@@ -443,6 +447,11 @@ export default function App() {
         lots={appState.lots}
         results={appState.results}
         currentUser={appState.currentUser}
+      />
+
+      <WindowsInstallModal
+        isOpen={isWindowsInstallOpen}
+        onClose={() => setIsWindowsInstallOpen(false)}
       />
     </div>
   );
