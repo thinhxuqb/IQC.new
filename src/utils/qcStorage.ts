@@ -1,5 +1,5 @@
-import { AuditLog, Instrument, MeanSdAuditRecord, QCLot, QCResult, TestAssay, UserProfile } from '../types/qc';
-import { generateInitialResults, INITIAL_ASSAYS, INITIAL_INSTRUMENTS, INITIAL_LOTS, INITIAL_USERS } from './initialData';
+import { AuditLog, Instrument, MeanSdAuditRecord, QCLot, QCMaterial, QCMapping, QCResult, TestAssay, UserProfile } from '../types/qc';
+import { generateInitialResults, INITIAL_ASSAYS, INITIAL_INSTRUMENTS, INITIAL_LOTS, INITIAL_MATERIALS, INITIAL_MAPPINGS, INITIAL_USERS } from './initialData';
 
 export const INITIAL_MEAN_SD_AUDIT: MeanSdAuditRecord[] = [
   {
@@ -60,6 +60,8 @@ const STORAGE_KEYS = {
   SYNC_QUEUE: 'qc_lab_sync_queue_v2',
   MEAN_SD_AUDIT: 'qc_lab_mean_sd_audit_v2',
   USERS: 'qc_lab_users_v2',
+  MATERIALS: 'qc_lab_materials_v2',
+  MAPPINGS: 'qc_lab_mappings_v2',
 };
 
 export interface AppStateData {
@@ -71,6 +73,8 @@ export interface AppStateData {
   currentUser: UserProfile;
   meanSdAuditHistory: MeanSdAuditRecord[];
   users: UserProfile[];
+  materials: QCMaterial[];
+  qcMappings: QCMapping[];
 }
 
 /**
@@ -86,6 +90,8 @@ export function loadAppState(): AppStateData {
     const rawUser = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
     const rawAudit = localStorage.getItem(STORAGE_KEYS.MEAN_SD_AUDIT);
     const rawUsers = localStorage.getItem(STORAGE_KEYS.USERS);
+    const rawMaterials = localStorage.getItem(STORAGE_KEYS.MATERIALS);
+    const rawMappings = localStorage.getItem(STORAGE_KEYS.MAPPINGS);
 
     const instruments: Instrument[] = rawInstruments ? JSON.parse(rawInstruments) : INITIAL_INSTRUMENTS;
     const assays: TestAssay[] = rawAssays ? JSON.parse(rawAssays) : INITIAL_ASSAYS;
@@ -93,6 +99,9 @@ export function loadAppState(): AppStateData {
     const users: UserProfile[] = rawUsers ? JSON.parse(rawUsers) : INITIAL_USERS;
     const currentUser: UserProfile = rawUser ? JSON.parse(rawUser) : users[0]; // Mặc định Trưởng khoa
     const meanSdAuditHistory: MeanSdAuditRecord[] = rawAudit ? JSON.parse(rawAudit) : INITIAL_MEAN_SD_AUDIT;
+    const materials: QCMaterial[] = rawMaterials ? JSON.parse(rawMaterials) : INITIAL_MATERIALS;
+    const qcMappings: QCMapping[] = rawMappings ? JSON.parse(rawMappings) : INITIAL_MAPPINGS;
+
     const logs: AuditLog[] = rawLogs ? JSON.parse(rawLogs) : [
       {
         id: 'log_init',
@@ -113,7 +122,7 @@ export function loadAppState(): AppStateData {
       localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(results));
     }
 
-    return { results, lots, assays, instruments, logs, currentUser, meanSdAuditHistory, users };
+    return { results, lots, assays, instruments, logs, currentUser, meanSdAuditHistory, users, materials, qcMappings };
   } catch (error) {
     console.error('Lỗi khi tải dữ liệu QC từ bộ nhớ cục bộ:', error);
     return {
@@ -125,6 +134,8 @@ export function loadAppState(): AppStateData {
       currentUser: INITIAL_USERS[0],
       meanSdAuditHistory: INITIAL_MEAN_SD_AUDIT,
       users: INITIAL_USERS,
+      materials: INITIAL_MATERIALS,
+      qcMappings: INITIAL_MAPPINGS,
     };
   }
 }
@@ -223,6 +234,28 @@ export function saveMeanSdAuditHistory(history: MeanSdAuditRecord[]) {
 }
 
 /**
+ * Lưu danh mục vật liệu QC
+ */
+export function saveMaterials(materials: QCMaterial[]) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.MATERIALS, JSON.stringify(materials));
+  } catch (err) {
+    console.error('Không thể lưu Materials:', err);
+  }
+}
+
+/**
+ * Lưu danh mục Map kiểm chuẩn (QC Mappings)
+ */
+export function saveQCMappings(mappings: QCMapping[]) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.MAPPINGS, JSON.stringify(mappings));
+  } catch (err) {
+    console.error('Không thể lưu QC Mappings:', err);
+  }
+}
+
+/**
  * Xuất dữ liệu sao lưu ra file JSON
  */
 export function exportBackupData(state: AppStateData): string {
@@ -239,6 +272,8 @@ export function exportBackupData(state: AppStateData): string {
       logs: state.logs,
       meanSdAuditHistory: state.meanSdAuditHistory,
       users: state.users,
+      materials: state.materials,
+      qcMappings: state.qcMappings,
     },
   };
   return JSON.stringify(backupObject, null, 2);
@@ -253,7 +288,7 @@ export function importBackupData(jsonString: string): AppStateData | null {
     if (!parsed.data || !Array.isArray(parsed.data.results)) {
       throw new Error('Định dạng tệp sao lưu không hợp lệ!');
     }
-    const { results, lots, assays, instruments, logs, meanSdAuditHistory, users } = parsed.data;
+    const { results, lots, assays, instruments, logs, meanSdAuditHistory, users, materials, qcMappings } = parsed.data;
     localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(results));
     if (lots) localStorage.setItem(STORAGE_KEYS.LOTS, JSON.stringify(lots));
     if (assays) localStorage.setItem(STORAGE_KEYS.ASSAYS, JSON.stringify(assays));
@@ -261,6 +296,8 @@ export function importBackupData(jsonString: string): AppStateData | null {
     if (logs) localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(logs));
     if (meanSdAuditHistory) localStorage.setItem(STORAGE_KEYS.MEAN_SD_AUDIT, JSON.stringify(meanSdAuditHistory));
     if (users) localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+    if (materials) localStorage.setItem(STORAGE_KEYS.MATERIALS, JSON.stringify(materials));
+    if (qcMappings) localStorage.setItem(STORAGE_KEYS.MAPPINGS, JSON.stringify(qcMappings));
 
     return {
       results,
@@ -271,6 +308,8 @@ export function importBackupData(jsonString: string): AppStateData | null {
       currentUser: (users && users[0]) || INITIAL_USERS[0],
       meanSdAuditHistory: meanSdAuditHistory || INITIAL_MEAN_SD_AUDIT,
       users: users || INITIAL_USERS,
+      materials: materials || INITIAL_MATERIALS,
+      qcMappings: qcMappings || INITIAL_MAPPINGS,
     };
   } catch (err) {
     console.error('Lỗi khi phục hồi tệp sao lưu:', err);
@@ -289,6 +328,8 @@ export function resetDemoDatabase(): AppStateData {
   localStorage.setItem(STORAGE_KEYS.INSTRUMENTS, JSON.stringify(INITIAL_INSTRUMENTS));
   localStorage.setItem(STORAGE_KEYS.MEAN_SD_AUDIT, JSON.stringify(INITIAL_MEAN_SD_AUDIT));
   localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
+  localStorage.setItem(STORAGE_KEYS.MATERIALS, JSON.stringify(INITIAL_MATERIALS));
+  localStorage.setItem(STORAGE_KEYS.MAPPINGS, JSON.stringify(INITIAL_MAPPINGS));
   
   const resetLog: AuditLog = {
     id: `log_reset_${Date.now()}`,
@@ -310,5 +351,7 @@ export function resetDemoDatabase(): AppStateData {
     currentUser: INITIAL_USERS[0],
     meanSdAuditHistory: INITIAL_MEAN_SD_AUDIT,
     users: INITIAL_USERS,
+    materials: INITIAL_MATERIALS,
+    qcMappings: INITIAL_MAPPINGS,
   };
 }

@@ -1,4 +1,4 @@
-import { Instrument, QCLevel, QCLot, QCResult, TestAssay, UserProfile } from '../types/qc';
+import { Instrument, QCLevel, QCLot, QCMaterial, QCMapping, QCResult, TestAssay, UserProfile } from '../types/qc';
 import { calculateZScore, evaluateWestgard } from './westgard';
 
 export const INITIAL_USERS: UserProfile[] = [
@@ -295,6 +295,58 @@ export const INITIAL_ASSAYS: TestAssay[] = [
     cliaTeaPercent: 15.0,
     method: 'ECLIA vi hạt từ tính',
   },
+];
+
+export const INITIAL_MATERIALS: QCMaterial[] = [
+  {
+    id: 'MAT_BIORAD_CHEM',
+    name: 'Bio-Rad Lyphochek Assayed Chemistry Control',
+    code: 'QC-CHEM-BIO',
+    manufacturer: 'Bio-Rad Laboratories Inc. (USA)',
+    lotNumber: 'BIO-2401',
+    expDate: '2027-08-31',
+    matrix: 'SERUM',
+    storageCondition: 'Đông khô, hoàn nguyên bảo quản 2 - 8°C (ổn định 7 ngày)',
+    active: true,
+    notes: 'Vật liệu QC đa chỉ số dùng chung cho toàn bộ các xét nghiệm Sinh Hóa máu trên máy AU400 (Glucose, Urea, Creatinine, AST, ALT, Cholesterol, Triglycerides, Acid Uric).',
+    levels: [
+      { level: 'level1', levelName: 'Mức 1 (Bình thường)', lotSubNumber: 'BIO-2401-L1' },
+      { level: 'level2', levelName: 'Mức 2 (Bệnh lý cao)', lotSubNumber: 'BIO-2401-L2' }
+    ]
+  },
+  {
+    id: 'MAT_SYSMEX_8CHECK',
+    name: 'Sysmex Eightcheck-3WP Hematology Control',
+    code: 'QC-HEMA-SYS8',
+    manufacturer: 'Sysmex Corporation (Japan)',
+    lotNumber: 'EC-8022',
+    expDate: '2027-06-30',
+    matrix: 'WHOLE_BLOOD',
+    storageCondition: 'Bảo quản 2 - 8°C, đảo đều nhẹ nhàng trước khi chạy (Tránh đông đá)',
+    active: true,
+    notes: 'Mẫu kiểm chuẩn tế bào máu 3 mức nồng độ, dùng chung cho các thông số WBC, RBC, HGB, HCT, PLT.',
+    levels: [
+      { level: 'level1', levelName: 'Mức 1 (Thấp / Low)', lotSubNumber: 'EC-8022-L1' },
+      { level: 'level2', levelName: 'Mức 2 (Bình thường / Normal)', lotSubNumber: 'EC-8022-L2' },
+      { level: 'level3', levelName: 'Mức 3 (Cao / High)', lotSubNumber: 'EC-8022-L3' }
+    ]
+  },
+  {
+    id: 'MAT_ROCHE_PRECI',
+    name: 'Roche PreciControl Immunoassay Multi',
+    code: 'QC-IMMUNO-ROCHE',
+    manufacturer: 'Roche Diagnostics (Switzerland)',
+    lotNumber: 'PC-9941',
+    expDate: '2027-09-30',
+    matrix: 'SERUM',
+    storageCondition: 'Dung dịch sẵn sàng sử dụng 2 - 8°C',
+    active: true,
+    notes: 'Vật liệu kiểm chuẩn miễn dịch dùng chung cho TSH, FT4, Troponin T hs và CEA trên máy Cobas e411.',
+    levels: [
+      { level: 'level1', levelName: 'Mức 1 (Bình thường)', lotSubNumber: 'PC-9941-L1' },
+      { level: 'level2', levelName: 'Mức 2 (Bệnh lý cao)', lotSubNumber: 'PC-9941-L2' }
+    ]
+  }
 ];
 
 export const INITIAL_LOTS: QCLot[] = [
@@ -677,3 +729,42 @@ export function generateInitialResults(): QCResult[] {
 
   return results;
 }
+
+export function generateInitialMappings(lots: QCLot[] = INITIAL_LOTS, assays: TestAssay[] = INITIAL_ASSAYS): QCMapping[] {
+  const mappings: QCMapping[] = [];
+
+  assays.forEach((assay) => {
+    let materialId = 'MAT_BIORAD_CHEM';
+    if (assay.instrumentId === 'SYSMEX800') {
+      materialId = 'MAT_SYSMEX_8CHECK';
+    } else if (assay.instrumentId === 'COBASE411') {
+      materialId = 'MAT_ROCHE_PRECI';
+    }
+
+    const assayLots = lots.filter(l => l.assayId === assay.id);
+    if (assayLots.length > 0) {
+      mappings.push({
+        id: `MAP_${assay.instrumentId}_${assay.id}_${materialId}`,
+        instrumentId: assay.instrumentId,
+        assayId: assay.id,
+        materialId,
+        active: true,
+        notes: `Cấu hình kiểm chuẩn chuẩn hóa ISO 15189 cho ${assay.name}`,
+        updatedAt: '2026-09-01T00:00:00.000Z',
+        levelConfigs: assayLots.map(l => ({
+          level: l.level,
+          levelName: l.levelName,
+          targetMean: l.targetMean,
+          targetSD: l.targetSD,
+          targetCV: l.targetCV,
+          active: l.active,
+          lotId: l.id
+        }))
+      });
+    }
+  });
+
+  return mappings;
+}
+
+export const INITIAL_MAPPINGS: QCMapping[] = generateInitialMappings();

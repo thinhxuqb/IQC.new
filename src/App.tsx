@@ -11,6 +11,8 @@ import {
   InstrumentId, 
   MeanSdAuditRecord, 
   QCLot, 
+  QCMaterial,
+  QCMapping,
   QCResult, 
   TestAssay, 
   UserProfile 
@@ -23,6 +25,8 @@ import {
   saveCurrentUser, 
   saveInstruments, 
   saveLots, 
+  saveMaterials,
+  saveQCMappings,
   saveMeanSdAuditHistory, 
   saveResults,
   saveUsers 
@@ -346,6 +350,80 @@ export default function App() {
     setAppState((prev) => ({ ...prev, users: updatedUsers }));
   };
 
+  // Thêm / Sửa Vật Liệu QC
+  const handleSaveMaterial = (mat: QCMaterial) => {
+    let updatedMaterials: QCMaterial[];
+    const exists = (appState.materials || []).some((m) => m.id === mat.id);
+    if (exists) {
+      updatedMaterials = (appState.materials || []).map((m) => (m.id === mat.id ? mat : m));
+    } else {
+      updatedMaterials = [...(appState.materials || []), mat];
+    }
+    saveMaterials(updatedMaterials);
+    setAppState((prev) => ({ ...prev, materials: updatedMaterials }));
+  };
+
+  // Xóa Vật Liệu QC
+  const handleDeleteMaterial = (matId: string) => {
+    const updatedMaterials = (appState.materials || []).filter((m) => m.id !== matId);
+    saveMaterials(updatedMaterials);
+    setAppState((prev) => ({ ...prev, materials: updatedMaterials }));
+  };
+
+  // Thêm / Sửa Map Kiểm Chuẩn (Ghép Nối & Cài Mean/SD từng mức)
+  const handleSaveMapping = (mapping: QCMapping) => {
+    let updatedMappings: QCMapping[];
+    const exists = (appState.qcMappings || []).some((m) => m.id === mapping.id);
+    if (exists) {
+      updatedMappings = (appState.qcMappings || []).map((m) => (m.id === mapping.id ? mapping : m));
+    } else {
+      updatedMappings = [...(appState.qcMappings || []), mapping];
+    }
+    saveQCMappings(updatedMappings);
+
+    // Đồng bộ sang danh mục QCLot để bảo đảm các biểu đồ Levey-Jennings, LIS và Westgard chạy trơn tru
+    const material = (appState.materials || []).find((m) => m.id === mapping.materialId);
+    let updatedLots = [...appState.lots];
+
+    mapping.levelConfigs.forEach((lvl) => {
+      const lotId = lvl.lotId || `LOT_${mapping.assayId}_${lvl.level}`;
+      const existingLotIndex = updatedLots.findIndex((l) => l.id === lotId || (l.assayId === mapping.assayId && l.level === lvl.level));
+
+      const syncedLot: QCLot = {
+        id: lotId,
+        assayId: mapping.assayId,
+        instrumentId: mapping.instrumentId,
+        lotNumber: material?.lotNumber || 'QC-LOT',
+        level: lvl.level,
+        levelName: lvl.levelName,
+        manufacturer: material?.manufacturer || 'Bio-Rad',
+        controlName: material?.name || 'QC Control',
+        expDate: material?.expDate || '2027-12-31',
+        targetMean: lvl.targetMean,
+        targetSD: lvl.targetSD,
+        targetCV: lvl.targetCV,
+        active: lvl.active && mapping.active,
+        materialId: mapping.materialId,
+      };
+
+      if (existingLotIndex >= 0) {
+        updatedLots[existingLotIndex] = { ...updatedLots[existingLotIndex], ...syncedLot };
+      } else {
+        updatedLots.push(syncedLot);
+      }
+    });
+
+    saveLots(updatedLots);
+    setAppState((prev) => ({ ...prev, qcMappings: updatedMappings, lots: updatedLots }));
+  };
+
+  // Xóa Map Kiểm Chuẩn
+  const handleDeleteMapping = (mappingId: string) => {
+    const updatedMappings = (appState.qcMappings || []).filter((m) => m.id !== mappingId);
+    saveQCMappings(updatedMappings);
+    setAppState((prev) => ({ ...prev, qcMappings: updatedMappings }));
+  };
+
   const selectedAssay = appState.assays.find((a) => a.id === selectedAssayId) || appState.assays[0];
   const selectedAssayLots = appState.lots.filter((l) => l.assayId === selectedAssay?.id);
 
@@ -543,6 +621,8 @@ export default function App() {
             instruments={appState.instruments}
             assays={appState.assays}
             lots={appState.lots}
+            materials={appState.materials || []}
+            qcMappings={appState.qcMappings || []}
             meanSdAuditHistory={appState.meanSdAuditHistory || []}
             currentUser={appState.currentUser}
             users={appState.users || []}
@@ -554,6 +634,10 @@ export default function App() {
             onDeleteInstrument={handleDeleteInstrument}
             onSaveUser={handleSaveUser}
             onDeleteUser={handleDeleteUser}
+            onSaveMaterial={handleSaveMaterial}
+            onDeleteMaterial={handleDeleteMaterial}
+            onSaveMapping={handleSaveMapping}
+            onDeleteMapping={handleDeleteMapping}
           />
         )}
 

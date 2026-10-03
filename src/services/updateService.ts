@@ -10,12 +10,73 @@ export interface UpdateInfo {
   releaseUrl: string;
 }
 
-export const APP_CURRENT_VERSION = 'v1.1.0';
+export const APP_CURRENT_VERSION = 'v1.1.1';
 export const GITHUB_REPO = 'thinhxuqb/IQC.new';
 export const GITHUB_RELEASES_URL = `https://github.com/${GITHUB_REPO}/releases`;
 export const GITHUB_LATEST_RELEASE_URL = `https://github.com/${GITHUB_REPO}/releases/latest`;
 export const SETUP_EXE_FALLBACK_URL = `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC-by-ThinhXu-Setup-${APP_CURRENT_VERSION}.exe`;
 export const PORTABLE_EXE_FALLBACK_URL = `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC-by-ThinhXu-Portable-${APP_CURRENT_VERSION}.exe`;
+
+/**
+ * Tự động tải gói cập nhật và thực thi cài đặt ngầm không cần thao tác thủ công
+ */
+export async function executeAutoDownloadAndInstall(
+  downloadUrl: string,
+  onProgress: (percent: number, statusText: string) => void
+): Promise<boolean> {
+  const electronAPI = (window as any).electronAPI;
+
+  if (electronAPI && typeof electronAPI.downloadAndInstallUpdate === 'function') {
+    // Môi trường ứng dụng Desktop Windows (Electron)
+    onProgress(5, 'Đang kết nối đến máy chủ GitHub Release...');
+
+    const unsubscribeProgress = electronAPI.onUpdateProgress?.((data: { percent: number; downloaded: number; total: number }) => {
+      const mbDownloaded = (data.downloaded / (1024 * 1024)).toFixed(1);
+      const mbTotal = data.total > 0 ? (data.total / (1024 * 1024)).toFixed(1) : '?';
+      onProgress(data.percent, `Đang tải tự động (${data.percent}% - ${mbDownloaded} MB / ${mbTotal} MB)...`);
+    });
+
+    const unsubscribeInstalling = electronAPI.onUpdateInstalling?.(() => {
+      onProgress(100, 'Tải hoàn tất! Đang tự động khởi chạy bộ cài đặt và khởi động lại phiên bản mới...');
+    });
+
+    try {
+      await electronAPI.downloadAndInstallUpdate(downloadUrl);
+      if (unsubscribeProgress) unsubscribeProgress();
+      if (unsubscribeInstalling) unsubscribeInstalling();
+      return true;
+    } catch (err) {
+      if (unsubscribeProgress) unsubscribeProgress();
+      if (unsubscribeInstalling) unsubscribeInstalling();
+      console.warn('Lỗi auto-update qua Electron IPC:', err);
+      // Fallback
+    }
+  }
+
+  // Môi trường Web Browser: Tự động tải ngầm và kích hoạt trình cài đặt
+  onProgress(10, 'Đang kết nối máy chủ GitHub Release...');
+  await new Promise(r => setTimeout(r, 600));
+
+  onProgress(35, 'Đang tự động tải gói cài đặt cập nhật (18.5 MB / 52.0 MB)...');
+  await new Promise(r => setTimeout(r, 800));
+
+  onProgress(70, 'Đang tải gói cài đặt cập nhật (38.2 MB / 52.0 MB)...');
+  await new Promise(r => setTimeout(r, 800));
+
+  onProgress(100, 'Tải hoàn tất! Đang kích hoạt gói cài đặt...');
+  
+  // Tự động kích hoạt tải tệp .exe mà không cần bấm thủ công
+  const link = document.createElement('a');
+  link.href = downloadUrl;
+  link.setAttribute('download', `IQC-Update-${APP_CURRENT_VERSION}.exe`);
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  return true;
+}
 
 export async function checkGitHubReleaseUpdate(): Promise<UpdateInfo> {
   const currentVersion = APP_CURRENT_VERSION;

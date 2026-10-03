@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { 
   checkGitHubReleaseUpdate, 
+  executeAutoDownloadAndInstall,
   UpdateInfo, 
   APP_CURRENT_VERSION, 
   GITHUB_REPO 
@@ -36,11 +37,19 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
   const [autoCheckEnabled, setAutoCheckEnabled] = useState<boolean>(() => {
     return localStorage.getItem('iqc_auto_check_update') !== 'false';
   });
-  const [downloadStarted, setDownloadStarted] = useState<boolean>(false);
+  
+  // Auto-Update states
+  const [isAutoUpdating, setIsAutoUpdating] = useState<boolean>(false);
+  const [updatePercent, setUpdatePercent] = useState<number>(0);
+  const [updateStatusText, setUpdateStatusText] = useState<string>('');
+  const [updateComplete, setUpdateComplete] = useState<boolean>(false);
 
   const performCheck = async () => {
     setChecking(true);
     setErrorMsg(null);
+    setIsAutoUpdating(false);
+    setUpdatePercent(0);
+    setUpdateComplete(false);
     try {
       const info = await checkGitHubReleaseUpdate();
       setUpdateInfo(info);
@@ -63,11 +72,22 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
     localStorage.setItem('iqc_auto_check_update', val ? 'true' : 'false');
   };
 
-  const handleAcceptUpdate = () => {
-    if (!updateInfo?.exeDownloadUrl) return;
-    setDownloadStarted(true);
-    // Kích hoạt mở link tải file .exe từ GitHub Releases
-    window.open(updateInfo.exeDownloadUrl, '_blank', 'noopener,noreferrer');
+  const handleAcceptUpdate = async () => {
+    const downloadUrl = updateInfo?.exeDownloadUrl || `https://github.com/${GITHUB_REPO}/releases/download/${updateInfo?.latestVersion || APP_CURRENT_VERSION}/IQC-by-ThinhXu-Setup-${updateInfo?.latestVersion || APP_CURRENT_VERSION}.exe`;
+    setIsAutoUpdating(true);
+    setUpdatePercent(5);
+    setUpdateStatusText('Đang khởi tạo tiến trình tự động tải và cài đặt...');
+
+    try {
+      await executeAutoDownloadAndInstall(downloadUrl, (percent, text) => {
+        setUpdatePercent(percent);
+        setUpdateStatusText(text);
+      });
+      setUpdateComplete(true);
+    } catch (err: any) {
+      setErrorMsg(`Lỗi khi tự động cài đặt: ${err?.message || 'Vui lòng thử lại'}`);
+      setIsAutoUpdating(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -173,28 +193,61 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
 
               {/* User Confirmation Buttons (Đồng ý cập nhật hay không) */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Bạn có muốn cập nhật lên phiên bản này ngay không?
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={handleAcceptUpdate}
-                    className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Đồng ý Cập Nhật</span>
-                  </button>
-                  <button
-                    onClick={onClose}
-                    className="py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-                  >
-                    Để sau / Không cập nhật
-                  </button>
-                </div>
-                {downloadStarted && (
-                  <p className="text-[11px] text-emerald-700 text-center font-medium animate-pulse">
-                    ✓ Đang tải file cài đặt .exe từ GitHub... Vui lòng mở và cài đè lên bản cũ khi tải xong!
-                  </p>
+                {!isAutoUpdating ? (
+                  <>
+                    <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Bạn có muốn cập nhật lên phiên bản này ngay không?
+                    </p>
+                    <p className="text-[11px] text-slate-600">
+                      Hệ thống sẽ <strong>tự động tải file và cài đặt ngầm</strong>, không cần bạn phải bấm tải và chạy file .exe thủ công.
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 pt-1">
+                      <button
+                        onClick={handleAcceptUpdate}
+                        className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Đồng Ý Tự Động Cập Nhật</span>
+                      </button>
+                      <button
+                        onClick={onClose}
+                        className="py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                      >
+                        Để sau / Không cập nhật
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-3 py-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-indigo-950 flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 text-indigo-600 animate-spin" />
+                        <span>Đang Tự Động Tải & Cài Đặt...</span>
+                      </span>
+                      <span className="font-mono font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded">
+                        {updatePercent}%
+                      </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-indigo-500 to-emerald-500 h-full transition-all duration-300 rounded-full"
+                        style={{ width: `${updatePercent}%` }}
+                      />
+                    </div>
+
+                    <p className="text-xs text-slate-600 text-center font-medium animate-pulse">
+                      {updateStatusText || 'Đang xử lý gói cài đặt...'}
+                    </p>
+
+                    {updateComplete && (
+                      <div className="p-2.5 bg-emerald-100 text-emerald-900 rounded-lg text-xs font-semibold text-center flex items-center justify-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>Cài đặt hoàn tất! Phiên bản mới đã sẵn sàng.</span>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

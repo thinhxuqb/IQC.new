@@ -124,12 +124,12 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={onOpenUpdateModal}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50/95 hover:bg-indigo-100 text-indigo-900 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
-                title="Kiểm tra & Cập nhật phiên bản mới nhất từ GitHub Releases (v1.1)"
+                title="Kiểm tra & Cập nhật phiên bản mới nhất từ GitHub Releases (v1.1.1)"
               >
                 <RefreshCw className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                 <span className="font-bold">Cập Nhật</span>
                 <span className="text-[10px] font-mono font-bold bg-indigo-200 text-indigo-800 px-1 py-0.5 rounded-xs">
-                  v1.1
+                  v1.1.1
                 </span>
               </button>
             )}

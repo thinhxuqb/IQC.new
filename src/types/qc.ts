@@ -99,6 +99,48 @@ export interface QCLot {
   targetCV: number; // Hệ số biến thiên % = (SD / Mean) * 100
   active: boolean;
   history?: MeanSdAuditRecord[];
+  materialId?: string; // Liên kết tới QCMaterial
+}
+
+export interface QCMaterialLevel {
+  level: QCLevel;
+  levelName: string;
+  lotSubNumber?: string;
+}
+
+export interface QCMaterial {
+  id: string;
+  name: string;            // Tên vật liệu QC (vd: Bio-Rad Lyphochek Assayed Chemistry Control)
+  code: string;            // Mã vật liệu (vd: QC-CHEM-BIO)
+  manufacturer: string;    // Hãng sản xuất (vd: Bio-Rad Laboratories)
+  lotNumber: string;       // Số Lô chung của nhà sản xuất (vd: BIO-2401)
+  expDate: string;         // Ngày hết hạn (vd: 2027-08-31)
+  matrix: 'SERUM' | 'PLASMA' | 'WHOLE_BLOOD' | 'URINE' | 'CSF'; // Nền mẫu
+  storageCondition: string;// Điều kiện bảo quản (vd: 2 - 8°C)
+  levels: QCMaterialLevel[];
+  active: boolean;
+  notes?: string;
+}
+
+export interface QCLevelSetting {
+  level: QCLevel;
+  levelName: string;
+  targetMean: number;
+  targetSD: number;
+  targetCV: number;
+  active: boolean;
+  lotId: string;
+}
+
+export interface QCMapping {
+  id: string;
+  instrumentId: InstrumentId;
+  assayId: string;
+  materialId: string;
+  levelConfigs: QCLevelSetting[];
+  active: boolean;
+  notes?: string;
+  updatedAt?: string;
 }
 
 export type WestgardRule = '1_2s' | '1_3s' | '2_2s' | 'R_4s' | '4_1s' | '10_x' | '7_T';
