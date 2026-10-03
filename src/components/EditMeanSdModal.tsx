@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Instrument, MeanSdAuditRecord, QCLot, TestAssay, UserProfile } from '../types/qc';
 import { X, ShieldAlert, History, Check, AlertCircle, Calculator } from 'lucide-react';
 
@@ -32,6 +32,18 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
   );
   const [notes, setNotes] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
+
+  useEffect(() => {
+    if (lot) {
+      setNewMean(lot.targetMean);
+      setNewSD(lot.targetSD);
+      setReasonCategory('CUMULATIVE_MEAN_20');
+      setReason('Tính toán lại Mean thực tế tích lũy sau 20 ngày chạy QC đầu kỳ theo ISO 15189 (Mục 7.3.7)');
+      setApprovedBy(currentUser.role === 'director' ? currentUser.name : 'TS. BS. Nguyễn Văn Hùng');
+      setNotes('');
+      setErrorMsg('');
+    }
+  }, [lot, isOpen, currentUser]);
 
   if (!isOpen) return null;
 

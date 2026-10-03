@@ -18,6 +18,8 @@ interface LeveyJenningsChartProps {
   lots: QCLot[]; // Các lô của xét nghiệm này (thường có Level 1 và Level 2)
   results: QCResult[];
   onSelectResultForCapa?: (result: QCResult) => void;
+  compact?: boolean;
+  onZoomIn?: () => void;
 }
 
 export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
@@ -25,6 +27,8 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
   lots,
   results,
   onSelectResultForCapa,
+  compact = false,
+  onZoomIn,
 }) => {
   // Chế độ hiển thị: 'combined' (gộp chung 1 trục) hoặc 'separated' (tách riêng từng trục)
   const [viewMode, setViewMode] = useState<'combined' | 'separated'>('combined');
@@ -983,26 +987,28 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
       )}
 
       {/* Ghi chú hướng dẫn đọc biểu đồ Levey-Jennings gộp */}
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-600">
-        <h5 className="font-semibold text-slate-900 mb-2 flex items-center gap-1.5">
-          <HelpCircle className="w-4 h-4 text-slate-500" />
-          <span>Ý Nghĩa Biểu Đồ Levey-Jennings Gộp Chung 1 Trục (Multi-Level Normalization)</span>
-        </h5>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <span className="font-medium text-slate-900">● Đường Mức 1 (Normal - Xanh Cyan):</span>
-            <p className="text-[11px] text-slate-500">Biểu diễn mẫu kiểm tra ở dải nồng độ sinh lý bình thường. Điểm đánh dấu dạng tròn (●).</p>
-          </div>
-          <div className="space-y-1">
-            <span className="font-medium text-purple-900">◆ Đường Mức 2 (Pathological - Tím Indigo):</span>
-            <p className="text-[11px] text-slate-500">Biểu diễn mẫu kiểm tra ở dải bệnh lý cao. Điểm đánh dấu dạng hình thoi (◆).</p>
-          </div>
-          <div className="space-y-1">
-            <span className="font-medium text-rose-700">▲ Phát hiện lỗi R-4s và trôi hệ thống:</span>
-            <p className="text-[11px] text-slate-500">Khi hai đường tách xa nhau quá 4SD trong cùng một ca, hoặc cùng trôi về một phía của trục 0 SD, hệ thống phát hiện lỗi chéo giữa các mức nồng độ.</p>
+      {!compact && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-600">
+          <h5 className="font-semibold text-slate-900 mb-2 flex items-center gap-1.5">
+            <HelpCircle className="w-4 h-4 text-slate-500" />
+            <span>Ý Nghĩa Biểu Đồ Levey-Jennings Gộp Chung 1 Trục (Multi-Level Normalization)</span>
+          </h5>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <span className="font-medium text-slate-900">● Đường Mức 1 (Normal - Xanh Cyan):</span>
+              <p className="text-[11px] text-slate-500">Biểu diễn mẫu kiểm tra ở dải nồng độ sinh lý bình thường. Điểm đánh dấu dạng tròn (●).</p>
+            </div>
+            <div className="space-y-1">
+              <span className="font-medium text-purple-900">◆ Đường Mức 2 (Pathological - Tím Indigo):</span>
+              <p className="text-[11px] text-slate-500">Biểu diễn mẫu kiểm tra ở dải bệnh lý cao. Điểm đánh dấu dạng hình thoi (◆).</p>
+            </div>
+            <div className="space-y-1">
+              <span className="font-medium text-rose-700">▲ Phát hiện lỗi R-4s và trôi hệ thống:</span>
+              <p className="text-[11px] text-slate-500">Khi hai đường tách xa nhau quá 4SD trong cùng một ca, hoặc cùng trôi về một phía của trục 0 SD, hệ thống phát hiện lỗi chéo giữa các mức nồng độ.</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

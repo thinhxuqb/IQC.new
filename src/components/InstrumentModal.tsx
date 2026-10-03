@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Instrument } from '../types/qc';
 import { X, Server, Check, AlertCircle } from 'lucide-react';
 
@@ -17,22 +17,47 @@ export const InstrumentModal: React.FC<InstrumentModalProps> = ({
 }) => {
   const isEditing = Boolean(instrumentToEdit);
 
-  const [id, setId] = useState<string>(instrumentToEdit?.id || '');
-  const [name, setName] = useState<string>(instrumentToEdit?.name || '');
-  const [code, setCode] = useState<string>(instrumentToEdit?.code || '');
-  const [manufacturer, setManufacturer] = useState<string>(instrumentToEdit?.manufacturer || '');
-  const [department, setDepartment] = useState<string>(instrumentToEdit?.department || 'Khoa Hóa Sinh');
-  const [model, setModel] = useState<string>(instrumentToEdit?.model || '');
-  const [serialNumber, setSerialNumber] = useState<string>(instrumentToEdit?.serialNumber || '');
-  const [status, setStatus] = useState<Instrument['status']>(instrumentToEdit?.status || 'ONLINE');
-  const [connectionType, setConnectionType] = useState<Instrument['connectionType']>(
-    instrumentToEdit?.connectionType || 'TCP_IP'
-  );
-  const [port, setPort] = useState<string>(instrumentToEdit?.port || '192.168.1.100:5000');
-  const [protocol, setProtocol] = useState<Instrument['protocol']>(
-    instrumentToEdit?.protocol || 'ASTM_E1381_E1394'
-  );
+  const [id, setId] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [code, setCode] = useState<string>('');
+  const [manufacturer, setManufacturer] = useState<string>('');
+  const [department, setDepartment] = useState<string>('Khoa Hóa Sinh');
+  const [model, setModel] = useState<string>('');
+  const [serialNumber, setSerialNumber] = useState<string>('');
+  const [status, setStatus] = useState<Instrument['status']>('ONLINE');
+  const [connectionType, setConnectionType] = useState<Instrument['connectionType']>('TCP_IP');
+  const [port, setPort] = useState<string>('192.168.1.100:5000');
+  const [protocol, setProtocol] = useState<Instrument['protocol']>('ASTM_E1381_E1394');
   const [errorMsg, setErrorMsg] = useState<string>('');
+
+  useEffect(() => {
+    if (instrumentToEdit) {
+      setId(instrumentToEdit.id || '');
+      setName(instrumentToEdit.name || '');
+      setCode(instrumentToEdit.code || '');
+      setManufacturer(instrumentToEdit.manufacturer || '');
+      setDepartment(instrumentToEdit.department || 'Khoa Hóa Sinh');
+      setModel(instrumentToEdit.model || '');
+      setSerialNumber(instrumentToEdit.serialNumber || '');
+      setStatus(instrumentToEdit.status || 'ONLINE');
+      setConnectionType(instrumentToEdit.connectionType || 'TCP_IP');
+      setPort(instrumentToEdit.port || '192.168.1.100:5000');
+      setProtocol(instrumentToEdit.protocol || 'ASTM_E1381_E1394');
+    } else {
+      setId('');
+      setName('');
+      setCode('');
+      setManufacturer('');
+      setDepartment('Khoa Hóa Sinh');
+      setModel('');
+      setSerialNumber('');
+      setStatus('ONLINE');
+      setConnectionType('TCP_IP');
+      setPort('192.168.1.100:5000');
+      setProtocol('ASTM_E1381_E1394');
+    }
+    setErrorMsg('');
+  }, [instrumentToEdit, isOpen]);
 
   if (!isOpen) return null;
 

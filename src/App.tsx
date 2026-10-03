@@ -34,6 +34,7 @@ import {
 import { Header } from './components/Header';
 import { DashboardView } from './components/DashboardView';
 import { LeveyJenningsChart } from './components/LeveyJenningsChart';
+import { MultiChartGridView } from './components/MultiChartGridView';
 import { MachineSignalReceiver } from './components/MachineSignalReceiver';
 import { CapaListView } from './components/CapaListView';
 import { BackupRestoreView } from './components/BackupRestoreView';
@@ -74,6 +75,12 @@ export default function App() {
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => localStorage.getItem('qc_lab_is_logged_in') !== 'false');
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.setItem('qc_lab_is_logged_in', 'false');
+  };
 
   // Bản cập nhật mới phát hiện khi khởi động
   const [availableUpdate, setAvailableUpdate] = useState<UpdateInfo | null>(null);
@@ -155,6 +162,43 @@ export default function App() {
         description: newResult.violations.length > 0 
           ? `${newResult.violations.map(v => v.ruleName).join(', ')}: ${newResult.violations[0].description}`
           : `Giá trị ${newResult.value} vượt ngưỡng kiểm soát.`,
+      });
+    }
+  };
+
+  // Thêm hàng loạt kết quả QC cùng lúc từ bảng Worksheet
+  const handleAddNewResults = (newResults: QCResult[]) => {
+    if (!newResults || newResults.length === 0) return;
+    const updatedResults = [...newResults, ...appState.results];
+    saveResults(updatedResults);
+
+    const log: AuditLog = {
+      id: `log_batch_${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      userId: appState.currentUser.id,
+      userName: appState.currentUser.name,
+      role: appState.currentUser.role,
+      action: 'NHẬP_QC_HÀNG_LOẠT',
+      details: `Đã nhập bảng kết quả nội kiểm hàng loạt gồm ${newResults.length} giá trị xét nghiệm và các mức.`,
+      instrumentId: newResults[0]?.instrumentId,
+    };
+    saveAuditLog(log);
+
+    setAppState((prev) => ({
+      ...prev,
+      results: updatedResults,
+      logs: [log, ...prev.logs],
+    }));
+
+    // Bật cảnh báo nếu có vi phạm
+    const firstViolation = newResults.find(r => r.status === 'REJECTED') || newResults.find(r => r.status === 'WARNING');
+    if (firstViolation) {
+      setActiveAlert({
+        result: firstViolation,
+        title: firstViolation.status === 'REJECTED' ? 'Cảnh Báo Vi Phạm Westgard (Batch Entry)' : 'Cảnh Báo Theo Dõi (1-2s)',
+        description: firstViolation.violations.length > 0 
+          ? `${firstViolation.violations.map(v => v.ruleName).join(', ')}: ${firstViolation.violations[0].description}`
+          : `Có ${newResults.filter(r => r.status === 'REJECTED').length} xét nghiệm bị vi phạm quy tắc Westgard cần xem xét.`,
       });
     }
   };
@@ -435,7 +479,9 @@ export default function App() {
         onSelectTab={setCurrentTab}
         currentUser={appState.currentUser}
         onOpenUserModal={() => setIsUserModalOpen(true)}
-        onLogout={() => setIsLoginModalOpen(true)}
+        onLogout={handleLogout}
+        onLogin={() => setIsLoginModalOpen(true)}
+        isLoggedIn={isLoggedIn}
         isOnline={isOnline}
         pendingSyncCount={pendingSyncCount}
         unresolvedCapaCount={unresolvedCapaCount}
@@ -562,57 +608,22 @@ export default function App() {
           />
         )}
 
-        {/* Tab 2: Levey-Jennings Chart */}
+        {/* Tab 2: Levey-Jennings Chart (Hỗ trợ xem đa biểu đồ theo máy hoặc theo xét nghiệm) */}
         {currentTab === 'chart' && (
-          <div className="space-y-6">
-            {/* Assay Selector Top Bar */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-cyan-600" />
-                <span className="font-bold text-sm text-slate-900">
-                  Chọn Xét Nghiệm Kiểm Tra:
-                </span>
-                <select
-                  value={selectedAssayId}
-                  onChange={(e) => setSelectedAssayId(e.target.value)}
-                  className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-900 focus:outline-hidden focus:border-cyan-600"
-                >
-                  {appState.assays.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      [{a.instrumentId}] {a.code} - {a.name} ({a.unit})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setIsManualEntryOpen(true)}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold transition-colors"
-                >
-                  + Nhập Kết Quả
-                </button>
-                <button
-                  onClick={() => setIsReportModalOpen(true)}
-                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Xuất Báo Cáo Tháng (PDF)</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Levey-Jennings Chart Canvas */}
-            <LeveyJenningsChart
-              assay={selectedAssay}
-              lots={selectedAssayLots}
-              results={appState.results}
-              onSelectResultForCapa={(res) => {
-                setSelectedResultForCapa(res);
-                setIsCapaModalOpen(true);
-              }}
-            />
-          </div>
+          <MultiChartGridView
+            instruments={appState.instruments}
+            assays={appState.assays}
+            lots={appState.lots}
+            results={appState.results}
+            selectedAssayId={selectedAssayId}
+            onSelectAssay={(id) => setSelectedAssayId(id)}
+            onSelectResultForCapa={(res) => {
+              setSelectedResultForCapa(res);
+              setIsCapaModalOpen(true);
+            }}
+            onOpenManualEntry={() => setIsManualEntryOpen(true)}
+            onOpenReportModal={() => setIsReportModalOpen(true)}
+          />
         )}
 
         {/* Tab 3: QC Master Data & Mean/SD Audit Trail */}
@@ -744,6 +755,7 @@ export default function App() {
         currentUser={appState.currentUser}
         historicalResults={appState.results}
         onAddResult={handleAddNewResult}
+        onAddResults={handleAddNewResults}
       />
 
       <QCReportModal
@@ -762,6 +774,8 @@ export default function App() {
         onLoginSuccess={(u) => {
           saveCurrentUser(u);
           setAppState((prev) => ({ ...prev, currentUser: u }));
+          setIsLoggedIn(true);
+          localStorage.setItem('qc_lab_is_logged_in', 'true');
           setIsLoginModalOpen(false);
         }}
         onClose={() => setIsLoginModalOpen(false)}

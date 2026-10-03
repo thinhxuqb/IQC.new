@@ -16,6 +16,7 @@ import {
   Package,
   Sliders,
   LogOut,
+  LogIn,
   KeyRound
 } from 'lucide-react';
 
@@ -25,6 +26,8 @@ interface HeaderProps {
   currentUser: UserProfile;
   onOpenUserModal: () => void;
   onLogout?: () => void;
+  onLogin?: () => void;
+  isLoggedIn?: boolean;
   isOnline: boolean;
   pendingSyncCount: number;
   unresolvedCapaCount: number;
@@ -37,6 +40,8 @@ export const Header: React.FC<HeaderProps> = ({
   currentUser,
   onOpenUserModal,
   onLogout,
+  onLogin,
+  isLoggedIn = true,
   isOnline,
   pendingSyncCount,
   unresolvedCapaCount,
@@ -134,39 +139,58 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* User Profile & Role Switcher */}
-            <div className="flex items-center gap-1">
-              <button
-                onClick={onOpenUserModal}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-left transition-colors group"
-                title="Xem thông tin & đổi vai trò người dùng"
-              >
-                <div className="w-6 h-6 rounded-full bg-slate-900 text-cyan-400 flex items-center justify-center text-xs font-bold">
-                  {currentUser.name.split(' ').pop()?.[0] || 'U'}
-                </div>
-                <div className="hidden sm:block text-left">
-                  <div className="text-xs font-bold text-slate-900 group-hover:text-cyan-700 leading-tight flex items-center gap-1">
-                    <span>{currentUser.name}</span>
-                    <span className="text-[10px] text-cyan-800 font-mono font-normal">
-                      @{currentUser.username}
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 leading-none">
-                    {currentUser.roleTitle.split('/')[0]}
-                  </div>
-                </div>
-              </button>
-
-              {onLogout && (
+            {/* User Profile, Login & Logout Buttons */}
+            {isLoggedIn ? (
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={onLogout}
-                  className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600 transition-colors"
-                  title="Đăng xuất khỏi phiên làm việc"
+                  onClick={onOpenUserModal}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-left transition-colors group cursor-pointer shadow-2xs"
+                  title="Xem thông tin & đổi vai trò người dùng"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <div className="w-6 h-6 rounded-full bg-slate-900 text-cyan-400 flex items-center justify-center text-xs font-bold shrink-0">
+                    {currentUser.name.split(' ').pop()?.[0] || 'U'}
+                  </div>
+                  <div className="hidden sm:block text-left">
+                    <div className="text-xs font-bold text-slate-900 group-hover:text-cyan-700 leading-tight flex items-center gap-1">
+                      <span>{currentUser.name}</span>
+                      <span className="text-[10px] text-cyan-800 font-mono font-normal">
+                        @{currentUser.username}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 leading-none">
+                      {currentUser.roleTitle.split('/')[0]}
+                    </div>
+                  </div>
                 </button>
-              )}
-            </div>
+
+                {onLogout && (
+                  <button
+                    onClick={onLogout}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                    title="Đăng xuất khỏi hệ thống"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Đăng Xuất</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200">
+                  <User className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Chưa Đăng Nhập</span>
+                </div>
+
+                <button
+                  onClick={onLogin}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                  title="Đăng nhập tài khoản phòng xét nghiệm"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Đăng Nhập</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

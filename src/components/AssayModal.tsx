@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Instrument, TestAssay } from '../types/qc';
 import { X, TestTube, Check, AlertCircle } from 'lucide-react';
 
@@ -19,19 +19,38 @@ export const AssayModal: React.FC<AssayModalProps> = ({
 }) => {
   const isEditing = Boolean(assayToEdit);
 
-  const [instrumentId, setInstrumentId] = useState<string>(
-    assayToEdit?.instrumentId || instruments[0]?.id || 'AU400'
-  );
-  const [code, setCode] = useState<string>(assayToEdit?.code || '');
-  const [name, setName] = useState<string>(assayToEdit?.name || '');
-  const [unit, setUnit] = useState<string>(assayToEdit?.unit || 'mmol/L');
-  const [sampleType, setSampleType] = useState<TestAssay['sampleType']>(
-    assayToEdit?.sampleType || 'SERUM'
-  );
-  const [decimalPlaces, setDecimalPlaces] = useState<number>(assayToEdit?.decimalPlaces ?? 2);
-  const [cliaTeaPercent, setCliaTeaPercent] = useState<number>(assayToEdit?.cliaTeaPercent ?? 10);
-  const [method, setMethod] = useState<string>(assayToEdit?.method || '');
+  const [instrumentId, setInstrumentId] = useState<string>('AU400');
+  const [code, setCode] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [unit, setUnit] = useState<string>('mmol/L');
+  const [sampleType, setSampleType] = useState<TestAssay['sampleType']>('SERUM');
+  const [decimalPlaces, setDecimalPlaces] = useState<number>(2);
+  const [cliaTeaPercent, setCliaTeaPercent] = useState<number>(10);
+  const [method, setMethod] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
+
+  useEffect(() => {
+    if (assayToEdit) {
+      setInstrumentId(assayToEdit.instrumentId || instruments[0]?.id || 'AU400');
+      setCode(assayToEdit.code || '');
+      setName(assayToEdit.name || '');
+      setUnit(assayToEdit.unit || 'mmol/L');
+      setSampleType(assayToEdit.sampleType || 'SERUM');
+      setDecimalPlaces(assayToEdit.decimalPlaces ?? 2);
+      setCliaTeaPercent(assayToEdit.cliaTeaPercent ?? 10);
+      setMethod(assayToEdit.method || '');
+    } else {
+      setInstrumentId(instruments[0]?.id || 'AU400');
+      setCode('');
+      setName('');
+      setUnit('mmol/L');
+      setSampleType('SERUM');
+      setDecimalPlaces(2);
+      setCliaTeaPercent(10);
+      setMethod('');
+    }
+    setErrorMsg('');
+  }, [assayToEdit, isOpen, instruments]);
 
   if (!isOpen) return null;
 

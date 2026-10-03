@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPermissions, UserProfile, UserRole } from '../types/qc';
 import { X, UserPlus, Check, AlertCircle, Shield, KeyRound, Lock } from 'lucide-react';
 
@@ -56,19 +56,44 @@ export const UserModal: React.FC<UserModalProps> = ({
 }) => {
   const isEditing = Boolean(userToEdit);
 
-  const [username, setUsername] = useState<string>(userToEdit?.username || '');
-  const [password, setPassword] = useState<string>(userToEdit?.password || '123');
-  const [name, setName] = useState<string>(userToEdit?.name || '');
-  const [code, setCode] = useState<string>(userToEdit?.code || '');
-  const [role, setRole] = useState<UserRole>(userToEdit?.role || 'technician');
-  const [department, setDepartment] = useState<string>(userToEdit?.department || 'Khoa Xét Nghiệm');
-  const [phone, setPhone] = useState<string>(userToEdit?.phone || '');
-  const [email, setEmail] = useState<string>(userToEdit?.email || '');
-  const [active, setActive] = useState<boolean>(userToEdit ? userToEdit.active : true);
-  const [permissions, setPermissions] = useState<UserPermissions>(
-    userToEdit?.permissions || DEFAULT_ROLE_PERMISSIONS['technician']
-  );
+  const [username, setUsername] = useState<string>('');
+  const [password, setPassword] = useState<string>('123');
+  const [name, setName] = useState<string>('');
+  const [code, setCode] = useState<string>('');
+  const [role, setRole] = useState<UserRole>('technician');
+  const [department, setDepartment] = useState<string>('Khoa Xét Nghiệm');
+  const [phone, setPhone] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [active, setActive] = useState<boolean>(true);
+  const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_ROLE_PERMISSIONS['technician']);
   const [errorMsg, setErrorMsg] = useState<string>('');
+
+  useEffect(() => {
+    if (userToEdit) {
+      setUsername(userToEdit.username || '');
+      setPassword(userToEdit.password || '123');
+      setName(userToEdit.name || '');
+      setCode(userToEdit.code || '');
+      setRole(userToEdit.role || 'technician');
+      setDepartment(userToEdit.department || 'Khoa Xét Nghiệm');
+      setPhone(userToEdit.phone || '');
+      setEmail(userToEdit.email || '');
+      setActive(userToEdit.active ?? true);
+      setPermissions(userToEdit.permissions || DEFAULT_ROLE_PERMISSIONS[userToEdit.role || 'technician']);
+    } else {
+      setUsername('');
+      setPassword('123');
+      setName('');
+      setCode(`NV-${Date.now().toString().slice(-4)}`);
+      setRole('technician');
+      setDepartment('Khoa Xét Nghiệm');
+      setPhone('');
+      setEmail('');
+      setActive(true);
+      setPermissions(DEFAULT_ROLE_PERMISSIONS['technician']);
+    }
+    setErrorMsg('');
+  }, [userToEdit, isOpen]);
 
   if (!isOpen) return null;
 
