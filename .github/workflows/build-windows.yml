@@ -30,15 +30,12 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install Project Dependencies
+      - name: Install All Dependencies
         run: |
           npm install --legacy-peer-deps
+          npm install --legacy-peer-deps --save-dev electron@34.0.0 electron-builder@25.1.8
 
-      - name: Install Electron Build Tools
-        run: |
-          npm install --save-dev electron@34.0.0 electron-builder@25.1.8
-
-      - name: Configure Electron Files
+      - name: Configure Electron Files & Metadata
         run: |
           mkdir -p electron
           cat << 'EOF' > electron/main.cjs
@@ -97,15 +94,24 @@ jobs:
           }
           EOF
 
+          node -e "
+            const fs = require('fs');
+            if (fs.existsSync('package.json')) {
+              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+              pkg.description = pkg.description || 'IQC by ThinhXu - Quản Lý Nội Kiểm Xét Nghiệm';
+              pkg.author = pkg.author || 'ThinhXu';
+              pkg.main = 'electron/main.cjs';
+              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+            }
+          "
+
       - name: Build Web Application
         run: |
           npm run build
 
       - name: Build Windows .EXE Packages
         run: |
-          npx electron-builder --win --x64
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npx electron-builder --win --x64 --publish never
 
       - name: Upload Windows EXE Artifacts
         uses: actions/upload-artifact@v4
