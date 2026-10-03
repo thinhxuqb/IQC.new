@@ -26,11 +26,57 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install Dependencies
         run: |
           npm install --legacy-peer-deps
+
+      - name: Ensure Electron Setup Files
+        run: |
+          node -e "
+            const fs = require('fs');
+            if (!fs.existsSync('electron')) fs.mkdirSync('electron');
+            const mainCjs = \`const { app, BrowserWindow } = require('electron');
+            const path = require('path');
+            function createWindow() {
+              const mainWindow = new BrowserWindow({
+                width: 1366,
+                height: 850,
+                minWidth: 1024,
+                minHeight: 700,
+                title: 'IQC by ThinhXu - Quản Lý Nội Kiểm ISO 15189',
+                autoHideMenuBar: false,
+                webPreferences: { nodeIntegration: false, contextIsolation: true }
+              });
+              mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+            }
+            app.whenReady().then(createWindow);
+            app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+            \`;
+            fs.writeFileSync('electron/main.cjs', mainCjs);
+
+            const builderConfig = {
+              appId: 'com.thinhxu.iqc',
+              productName: 'IQC by ThinhXu',
+              directories: { output: 'dist-electron' },
+              files: ['dist/**/*', 'electron/**/*', 'public/**/*'],
+              extraMetadata: { main: 'electron/main.cjs' },
+              win: {
+                target: [
+                  { target: 'nsis', arch: ['x64'] },
+                  { target: 'portable', arch: ['x64'] }
+                ],
+                artifactName: '\${productName}-\${target}-v\${version}.\${ext}'
+              },
+              nsis: {
+                oneClick: false,
+                allowToChangeInstallationDirectory: true,
+                createDesktopShortcut: true,
+                createStartMenuShortcut: true
+              }
+            };
+            fs.writeFileSync('electron-builder.json', JSON.stringify(builderConfig, null, 2));
+          "
 
       - name: Install Electron & Electron-Builder
         run: |
