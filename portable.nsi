@@ -14,6 +14,7 @@ Section
 
   File /r "dist\*.*"
   File "public\favicon.ico"
+  File "launch.bat"
 
   ExecWait '"$PLUGINSDIR\app\launch.bat"'
 SectionEnd

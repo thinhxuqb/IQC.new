@@ -9,6 +9,7 @@ import {
   CapaRecord, 
   Instrument, 
   InstrumentId, 
+  MeanSdAuditRecord, 
   QCLot, 
   QCResult, 
   TestAssay, 
@@ -17,9 +18,14 @@ import {
 import { 
   AppStateData, 
   loadAppState, 
+  saveAssays, 
   saveAuditLog, 
   saveCurrentUser, 
-  saveResults 
+  saveInstruments, 
+  saveLots, 
+  saveMeanSdAuditHistory, 
+  saveResults,
+  saveUsers 
 } from './utils/qcStorage';
 import { Header } from './components/Header';
 import { DashboardView } from './components/DashboardView';
@@ -27,11 +33,12 @@ import { LeveyJenningsChart } from './components/LeveyJenningsChart';
 import { MachineSignalReceiver } from './components/MachineSignalReceiver';
 import { CapaListView } from './components/CapaListView';
 import { BackupRestoreView } from './components/BackupRestoreView';
+import { QCConfigView } from './components/QCConfigView';
 import { UserRoleSwitcherModal } from './components/UserRoleSwitcherModal';
 import { CapaModal } from './components/CapaModal';
 import { ManualEntryModal } from './components/ManualEntryModal';
 import { QCReportModal } from './components/QCReportModal';
-import { WindowsInstallModal } from './components/WindowsInstallModal';
+import { LoginModal } from './components/LoginModal';
 import { UpdateCheckModal } from './components/UpdateCheckModal';
 import { checkGitHubReleaseUpdate } from './services/updateService';
 import { 
@@ -59,7 +66,7 @@ export default function App() {
   const [selectedResultForCapa, setSelectedResultForCapa] = useState<QCResult | null>(null);
   const [isManualEntryOpen, setIsManualEntryOpen] = useState<boolean>(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
-  const [isWindowsInstallOpen, setIsWindowsInstallOpen] = useState<boolean>(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
 
   // Toast thông báo tức thì khi máy truyền kết quả vi phạm
@@ -203,6 +210,132 @@ export default function App() {
     }, 400);
   };
 
+  // Cập nhật Lô QC (bao gồm sửa Mean/SD có lưu vết ISO 15189)
+  const handleUpdateLot = (updatedLot: QCLot, auditRecord?: MeanSdAuditRecord) => {
+    let updatedLots: QCLot[];
+    const exists = appState.lots.some((l) => l.id === updatedLot.id);
+    if (exists) {
+      updatedLots = appState.lots.map((l) => (l.id === updatedLot.id ? updatedLot : l));
+    } else {
+      updatedLots = [...appState.lots, updatedLot];
+    }
+    saveLots(updatedLots);
+
+    let updatedAuditHistory = appState.meanSdAuditHistory || [];
+    let updatedLogs = appState.logs;
+
+    if (auditRecord) {
+      updatedAuditHistory = [auditRecord, ...updatedAuditHistory];
+      saveMeanSdAuditHistory(updatedAuditHistory);
+
+      const log: AuditLog = {
+        id: `log_msd_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        userId: appState.currentUser.id,
+        userName: appState.currentUser.name,
+        role: appState.currentUser.role,
+        action: 'HIỆU_CHỈNH_MEAN_SD',
+        details: `Hiệu chỉnh Mean & SD Lô ${updatedLot.lotNumber} (${updatedLot.levelName}) - ${auditRecord.assayName}. Mean: ${auditRecord.oldMean} -> ${auditRecord.newMean}, SD: ${auditRecord.oldSD} -> ${auditRecord.newSD}. Lý do: ${auditRecord.reason}`,
+        instrumentId: updatedLot.instrumentId,
+      };
+      saveAuditLog(log);
+      updatedLogs = [log, ...updatedLogs];
+    }
+
+    setAppState((prev) => ({
+      ...prev,
+      lots: updatedLots,
+      meanSdAuditHistory: updatedAuditHistory,
+      logs: updatedLogs,
+    }));
+  };
+
+  // Xóa Lô QC
+  const handleDeleteLot = (lotId: string) => {
+    const updatedLots = appState.lots.filter((l) => l.id !== lotId);
+    saveLots(updatedLots);
+    setAppState((prev) => ({ ...prev, lots: updatedLots }));
+  };
+
+  // Thêm / Sửa Xét nghiệm
+  const handleSaveAssay = (assay: TestAssay) => {
+    let updatedAssays: TestAssay[];
+    const exists = appState.assays.some((a) => a.id === assay.id);
+    if (exists) {
+      updatedAssays = appState.assays.map((a) => (a.id === assay.id ? assay : a));
+    } else {
+      updatedAssays = [...appState.assays, assay];
+    }
+    saveAssays(updatedAssays);
+    setAppState((prev) => ({ ...prev, assays: updatedAssays }));
+  };
+
+  // Xóa Xét nghiệm
+  const handleDeleteAssay = (assayId: string) => {
+    const updatedAssays = appState.assays.filter((a) => a.id !== assayId);
+    saveAssays(updatedAssays);
+    setAppState((prev) => ({ ...prev, assays: updatedAssays }));
+  };
+
+  // Thêm / Sửa Thiết bị
+  const handleSaveInstrument = (inst: Instrument) => {
+    let updatedInstruments: Instrument[];
+    const exists = appState.instruments.some((i) => i.id === inst.id);
+    if (exists) {
+      updatedInstruments = appState.instruments.map((i) => (i.id === inst.id ? inst : i));
+    } else {
+      updatedInstruments = [...appState.instruments, inst];
+    }
+    saveInstruments(updatedInstruments);
+    setAppState((prev) => ({ ...prev, instruments: updatedInstruments }));
+  };
+
+  // Xóa Thiết bị
+  const handleDeleteInstrument = (instId: string) => {
+    const updatedInstruments = appState.instruments.filter((i) => i.id !== instId);
+    saveInstruments(updatedInstruments);
+    setAppState((prev) => ({ ...prev, instruments: updatedInstruments }));
+  };
+
+  // Thêm / Sửa Người Dùng & Phân Quyền
+  const handleSaveUser = (user: UserProfile) => {
+    let updatedUsers: UserProfile[];
+    const exists = (appState.users || []).some((u) => u.id === user.id);
+    if (exists) {
+      updatedUsers = (appState.users || []).map((u) => (u.id === user.id ? user : u));
+    } else {
+      updatedUsers = [...(appState.users || []), user];
+    }
+    saveUsers(updatedUsers);
+
+    const isSelf = appState.currentUser.id === user.id;
+
+    const log: AuditLog = {
+      id: `log_usr_${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      userId: appState.currentUser.id,
+      userName: appState.currentUser.name,
+      role: appState.currentUser.role,
+      action: exists ? 'CẬP_NHẬT_NGƯỜI_DÙNG' : 'TẠO_NGƯỜI_DÙNG_MỚI',
+      details: `${exists ? 'Cập nhật tài khoản & phân quyền' : 'Khai báo người dùng mới'}: ${user.name} (@${user.username}) - ${user.roleTitle}`,
+    };
+    saveAuditLog(log);
+
+    setAppState((prev) => ({
+      ...prev,
+      users: updatedUsers,
+      currentUser: isSelf ? user : prev.currentUser,
+      logs: [log, ...prev.logs],
+    }));
+  };
+
+  // Xóa Người Dùng
+  const handleDeleteUser = (userId: string) => {
+    const updatedUsers = (appState.users || []).filter((u) => u.id !== userId);
+    saveUsers(updatedUsers);
+    setAppState((prev) => ({ ...prev, users: updatedUsers }));
+  };
+
   const selectedAssay = appState.assays.find((a) => a.id === selectedAssayId) || appState.assays[0];
   const selectedAssayLots = appState.lots.filter((l) => l.assayId === selectedAssay?.id);
 
@@ -214,10 +347,10 @@ export default function App() {
         onSelectTab={setCurrentTab}
         currentUser={appState.currentUser}
         onOpenUserModal={() => setIsUserModalOpen(true)}
+        onLogout={() => setIsLoginModalOpen(true)}
         isOnline={isOnline}
         pendingSyncCount={pendingSyncCount}
         unresolvedCapaCount={unresolvedCapaCount}
-        onOpenWindowsInstall={() => setIsWindowsInstallOpen(true)}
         onOpenUpdateModal={() => setIsUpdateModalOpen(true)}
       />
 
@@ -297,7 +430,7 @@ export default function App() {
             onOpenReceiver={() => setCurrentTab('receiver')}
             onOpenReport={() => setIsReportModalOpen(true)}
             onOpenCapaList={() => setCurrentTab('capa')}
-            onOpenWindowsInstall={() => setIsWindowsInstallOpen(true)}
+            onOpenConfig={() => setCurrentTab('config')}
           />
         )}
 
@@ -354,7 +487,27 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab 3: Machine Signal Receiver */}
+        {/* Tab 3: QC Master Data & Mean/SD Audit Trail */}
+        {currentTab === 'config' && (
+          <QCConfigView
+            instruments={appState.instruments}
+            assays={appState.assays}
+            lots={appState.lots}
+            meanSdAuditHistory={appState.meanSdAuditHistory || []}
+            currentUser={appState.currentUser}
+            users={appState.users || []}
+            onUpdateLot={handleUpdateLot}
+            onDeleteLot={handleDeleteLot}
+            onSaveAssay={handleSaveAssay}
+            onDeleteAssay={handleDeleteAssay}
+            onSaveInstrument={handleSaveInstrument}
+            onDeleteInstrument={handleDeleteInstrument}
+            onSaveUser={handleSaveUser}
+            onDeleteUser={handleDeleteUser}
+          />
+        )}
+
+        {/* Tab 4: Machine Signal Receiver */}
         {currentTab === 'receiver' && (
           <MachineSignalReceiver
             instruments={appState.instruments}
@@ -468,10 +621,15 @@ export default function App() {
         currentUser={appState.currentUser}
       />
 
-      <WindowsInstallModal
-        isOpen={isWindowsInstallOpen}
-        onClose={() => setIsWindowsInstallOpen(false)}
-        onOpenUpdateModal={() => setIsUpdateModalOpen(true)}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        users={appState.users || []}
+        onLoginSuccess={(u) => {
+          saveCurrentUser(u);
+          setAppState((prev) => ({ ...prev, currentUser: u }));
+          setIsLoginModalOpen(false);
+        }}
+        onClose={() => setIsLoginModalOpen(false)}
       />
 
       <UpdateCheckModal

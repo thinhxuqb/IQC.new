@@ -11,7 +11,12 @@ import {
   User, 
   AlertTriangle,
   Monitor,
-  RefreshCw
+  RefreshCw,
+  Download,
+  Package,
+  Sliders,
+  LogOut,
+  KeyRound
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -19,10 +24,10 @@ interface HeaderProps {
   onSelectTab: (tab: string) => void;
   currentUser: UserProfile;
   onOpenUserModal: () => void;
+  onLogout?: () => void;
   isOnline: boolean;
   pendingSyncCount: number;
   unresolvedCapaCount: number;
-  onOpenWindowsInstall?: () => void;
   onOpenUpdateModal?: () => void;
 }
 
@@ -31,19 +36,20 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectTab,
   currentUser,
   onOpenUserModal,
+  onLogout,
   isOnline,
   pendingSyncCount,
   unresolvedCapaCount,
-  onOpenWindowsInstall,
   onOpenUpdateModal,
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Bảng điều khiển', icon: Activity },
     { id: 'chart', label: 'Biểu đồ Levey-Jennings', icon: Activity },
+    { id: 'config', label: 'Khai báo & Cấu hình QC', icon: Sliders },
     { id: 'receiver', label: 'Kết nối máy LIS', icon: Radio },
     { id: 'capa', label: 'Xử lý sự cố CAPA', icon: AlertTriangle, badge: unresolvedCapaCount },
     { id: 'reports', label: 'Báo cáo ISO 15189', icon: FileText },
-    { id: 'backup', label: 'Sao lưu & Cấu hình', icon: Database },
+    { id: 'backup', label: 'Sao lưu & Dữ liệu', icon: Database },
   ];
 
   return (
@@ -113,19 +119,6 @@ export const Header: React.FC<HeaderProps> = ({
 
             <div className="h-4 w-px bg-slate-200 hidden sm:block" />
 
-            {/* Windows Desktop App Install Button */}
-            {onOpenWindowsInstall && (
-              <button
-                onClick={onOpenWindowsInstall}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-cyan-200 bg-cyan-50/90 hover:bg-cyan-100 text-cyan-800 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
-                title="Cài đặt trên máy tính Windows (Desktop App)"
-              >
-                <Monitor className="w-3.5 h-3.5 text-cyan-600" />
-                <span className="hidden sm:inline">Cài Windows App</span>
-                <span className="sm:hidden">Cài App</span>
-              </button>
-            )}
-
             {/* Check for Updates Button */}
             {onOpenUpdateModal && (
               <button
@@ -139,22 +132,38 @@ export const Header: React.FC<HeaderProps> = ({
             )}
 
             {/* User Profile & Role Switcher */}
-            <button
-              onClick={onOpenUserModal}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-left transition-colors group"
-            >
-              <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 border border-slate-300 flex items-center justify-center text-xs font-semibold">
-                {currentUser.name.split(' ').pop()?.[0] || 'U'}
-              </div>
-              <div className="hidden sm:block text-left">
-                <div className="text-xs font-medium text-slate-900 group-hover:text-cyan-700 leading-tight">
-                  {currentUser.name}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={onOpenUserModal}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-left transition-colors group"
+                title="Xem thông tin & đổi vai trò người dùng"
+              >
+                <div className="w-6 h-6 rounded-full bg-slate-900 text-cyan-400 flex items-center justify-center text-xs font-bold">
+                  {currentUser.name.split(' ').pop()?.[0] || 'U'}
                 </div>
-                <div className="text-[10px] text-slate-500 leading-none">
-                  {currentUser.roleTitle.split('/')[0]}
+                <div className="hidden sm:block text-left">
+                  <div className="text-xs font-bold text-slate-900 group-hover:text-cyan-700 leading-tight flex items-center gap-1">
+                    <span>{currentUser.name}</span>
+                    <span className="text-[10px] text-cyan-800 font-mono font-normal">
+                      @{currentUser.username}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 leading-none">
+                    {currentUser.roleTitle.split('/')[0]}
+                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
+
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600 transition-colors"
+                  title="Đăng xuất khỏi phiên làm việc"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

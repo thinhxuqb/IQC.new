@@ -1,5 +1,54 @@
-import { AuditLog, Instrument, QCLot, QCResult, TestAssay, UserProfile } from '../types/qc';
+import { AuditLog, Instrument, MeanSdAuditRecord, QCLot, QCResult, TestAssay, UserProfile } from '../types/qc';
 import { generateInitialResults, INITIAL_ASSAYS, INITIAL_INSTRUMENTS, INITIAL_LOTS, INITIAL_USERS } from './initialData';
+
+export const INITIAL_MEAN_SD_AUDIT: MeanSdAuditRecord[] = [
+  {
+    id: 'msd_rec_001',
+    lotId: 'AU_GLU_L1',
+    assayId: 'AU_GLU',
+    assayName: 'Glucose (Đường máu)',
+    instrumentId: 'AU400',
+    lotNumber: '45211',
+    level: 'level1',
+    levelName: 'Level 1 (Bình thường)',
+    timestamp: '2026-09-15T08:30:00.000Z',
+    changedBy: 'ThS. Lê Thị Thanh Mai',
+    changedByRole: 'Kỹ thuật viên trưởng / QLCL',
+    oldMean: 5.10,
+    newMean: 5.25,
+    oldSD: 0.18,
+    newSD: 0.17,
+    oldCV: 3.53,
+    newCV: 3.24,
+    reasonCategory: 'CUMULATIVE_MEAN_20',
+    reason: 'Tính toán lại Mean thực tế sau 20 ngày tích lũy đầu kỳ theo quy trình ISO 15189 (Mục 7.3.7)',
+    approvedBy: 'TS. BS. Nguyễn Văn Hùng',
+    notes: 'Phù hợp với hướng dẫn CLSI C24-A4. CV% thực tế 3.24% < TEa 10%.'
+  },
+  {
+    id: 'msd_rec_002',
+    lotId: 'AU_CREA_L2',
+    assayId: 'AU_CREA',
+    assayName: 'Creatinine (Creatinin máu)',
+    instrumentId: 'AU400',
+    lotNumber: '45212',
+    level: 'level2',
+    levelName: 'Level 2 (Bệnh lý cao)',
+    timestamp: '2026-09-20T14:15:00.000Z',
+    changedBy: 'TS. BS. Nguyễn Văn Hùng',
+    changedByRole: 'Trưởng khoa Xét nghiệm',
+    oldMean: 350.0,
+    newMean: 355.0,
+    oldSD: 12.0,
+    newSD: 11.5,
+    oldCV: 3.43,
+    newCV: 3.24,
+    reasonCategory: 'MAINTENANCE_CALIBRATION',
+    reason: 'Hiệu chuẩn lại sau khi thay bóng đèn quang học Halogen và bảo dưỡng cuvette máy AU400',
+    approvedBy: 'TS. BS. Nguyễn Văn Hùng',
+    notes: 'Đã chạy 5 mẫu thử lặp lại đạt độ lặp lại CV < 2.5%.'
+  }
+];
 
 const STORAGE_KEYS = {
   RESULTS: 'qc_lab_results_v2',
@@ -9,6 +58,8 @@ const STORAGE_KEYS = {
   LOGS: 'qc_lab_audit_logs_v2',
   CURRENT_USER: 'qc_lab_current_user_v2',
   SYNC_QUEUE: 'qc_lab_sync_queue_v2',
+  MEAN_SD_AUDIT: 'qc_lab_mean_sd_audit_v2',
+  USERS: 'qc_lab_users_v2',
 };
 
 export interface AppStateData {
@@ -18,6 +69,8 @@ export interface AppStateData {
   instruments: Instrument[];
   logs: AuditLog[];
   currentUser: UserProfile;
+  meanSdAuditHistory: MeanSdAuditRecord[];
+  users: UserProfile[];
 }
 
 /**
@@ -31,11 +84,15 @@ export function loadAppState(): AppStateData {
     const rawInstruments = localStorage.getItem(STORAGE_KEYS.INSTRUMENTS);
     const rawLogs = localStorage.getItem(STORAGE_KEYS.LOGS);
     const rawUser = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+    const rawAudit = localStorage.getItem(STORAGE_KEYS.MEAN_SD_AUDIT);
+    const rawUsers = localStorage.getItem(STORAGE_KEYS.USERS);
 
     const instruments: Instrument[] = rawInstruments ? JSON.parse(rawInstruments) : INITIAL_INSTRUMENTS;
     const assays: TestAssay[] = rawAssays ? JSON.parse(rawAssays) : INITIAL_ASSAYS;
     const lots: QCLot[] = rawLots ? JSON.parse(rawLots) : INITIAL_LOTS;
-    const currentUser: UserProfile = rawUser ? JSON.parse(rawUser) : INITIAL_USERS[0]; // Mặc định Trưởng khoa
+    const users: UserProfile[] = rawUsers ? JSON.parse(rawUsers) : INITIAL_USERS;
+    const currentUser: UserProfile = rawUser ? JSON.parse(rawUser) : users[0]; // Mặc định Trưởng khoa
+    const meanSdAuditHistory: MeanSdAuditRecord[] = rawAudit ? JSON.parse(rawAudit) : INITIAL_MEAN_SD_AUDIT;
     const logs: AuditLog[] = rawLogs ? JSON.parse(rawLogs) : [
       {
         id: 'log_init',
@@ -56,7 +113,7 @@ export function loadAppState(): AppStateData {
       localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(results));
     }
 
-    return { results, lots, assays, instruments, logs, currentUser };
+    return { results, lots, assays, instruments, logs, currentUser, meanSdAuditHistory, users };
   } catch (error) {
     console.error('Lỗi khi tải dữ liệu QC từ bộ nhớ cục bộ:', error);
     return {
@@ -66,6 +123,8 @@ export function loadAppState(): AppStateData {
       instruments: INITIAL_INSTRUMENTS,
       logs: [],
       currentUser: INITIAL_USERS[0],
+      meanSdAuditHistory: INITIAL_MEAN_SD_AUDIT,
+      users: INITIAL_USERS,
     };
   }
 }
@@ -131,6 +190,39 @@ export function saveCurrentUser(user: UserProfile) {
 }
 
 /**
+ * Lưu danh mục thiết bị
+ */
+export function saveInstruments(instruments: Instrument[]) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.INSTRUMENTS, JSON.stringify(instruments));
+  } catch (err) {
+    console.error('Không thể lưu Instruments:', err);
+  }
+}
+
+/**
+ * Lưu danh mục người dùng
+ */
+export function saveUsers(users: UserProfile[]) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  } catch (err) {
+    console.error('Không thể lưu Users:', err);
+  }
+}
+
+/**
+ * Lưu lịch sử lưu vết thay đổi Mean & SD
+ */
+export function saveMeanSdAuditHistory(history: MeanSdAuditRecord[]) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.MEAN_SD_AUDIT, JSON.stringify(history));
+  } catch (err) {
+    console.error('Không thể lưu Mean SD Audit History:', err);
+  }
+}
+
+/**
  * Xuất dữ liệu sao lưu ra file JSON
  */
 export function exportBackupData(state: AppStateData): string {
@@ -145,6 +237,8 @@ export function exportBackupData(state: AppStateData): string {
       assays: state.assays,
       instruments: state.instruments,
       logs: state.logs,
+      meanSdAuditHistory: state.meanSdAuditHistory,
+      users: state.users,
     },
   };
   return JSON.stringify(backupObject, null, 2);
@@ -159,12 +253,14 @@ export function importBackupData(jsonString: string): AppStateData | null {
     if (!parsed.data || !Array.isArray(parsed.data.results)) {
       throw new Error('Định dạng tệp sao lưu không hợp lệ!');
     }
-    const { results, lots, assays, instruments, logs } = parsed.data;
+    const { results, lots, assays, instruments, logs, meanSdAuditHistory, users } = parsed.data;
     localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(results));
     if (lots) localStorage.setItem(STORAGE_KEYS.LOTS, JSON.stringify(lots));
     if (assays) localStorage.setItem(STORAGE_KEYS.ASSAYS, JSON.stringify(assays));
     if (instruments) localStorage.setItem(STORAGE_KEYS.INSTRUMENTS, JSON.stringify(instruments));
     if (logs) localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(logs));
+    if (meanSdAuditHistory) localStorage.setItem(STORAGE_KEYS.MEAN_SD_AUDIT, JSON.stringify(meanSdAuditHistory));
+    if (users) localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
 
     return {
       results,
@@ -172,7 +268,9 @@ export function importBackupData(jsonString: string): AppStateData | null {
       assays: assays || INITIAL_ASSAYS,
       instruments: instruments || INITIAL_INSTRUMENTS,
       logs: logs || [],
-      currentUser: INITIAL_USERS[0],
+      currentUser: (users && users[0]) || INITIAL_USERS[0],
+      meanSdAuditHistory: meanSdAuditHistory || INITIAL_MEAN_SD_AUDIT,
+      users: users || INITIAL_USERS,
     };
   } catch (err) {
     console.error('Lỗi khi phục hồi tệp sao lưu:', err);
@@ -189,6 +287,8 @@ export function resetDemoDatabase(): AppStateData {
   localStorage.setItem(STORAGE_KEYS.LOTS, JSON.stringify(INITIAL_LOTS));
   localStorage.setItem(STORAGE_KEYS.ASSAYS, JSON.stringify(INITIAL_ASSAYS));
   localStorage.setItem(STORAGE_KEYS.INSTRUMENTS, JSON.stringify(INITIAL_INSTRUMENTS));
+  localStorage.setItem(STORAGE_KEYS.MEAN_SD_AUDIT, JSON.stringify(INITIAL_MEAN_SD_AUDIT));
+  localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
   
   const resetLog: AuditLog = {
     id: `log_reset_${Date.now()}`,
@@ -208,5 +308,7 @@ export function resetDemoDatabase(): AppStateData {
     instruments: INITIAL_INSTRUMENTS,
     logs: [resetLog],
     currentUser: INITIAL_USERS[0],
+    meanSdAuditHistory: INITIAL_MEAN_SD_AUDIT,
+    users: INITIAL_USERS,
   };
 }

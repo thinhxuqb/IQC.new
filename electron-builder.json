@@ -28,7 +28,11 @@
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
-    "shortcutName": "IQC by ThinhXu"
+    "shortcutName": "IQC by ThinhXu",
+    "artifactName": "IQC-by-ThinhXu-Setup-v${version}.${ext}"
+  },
+  "portable": {
+    "artifactName": "IQC-by-ThinhXu-Portable-v${version}.${ext}"
   },
   "publish": {
     "provider": "github",

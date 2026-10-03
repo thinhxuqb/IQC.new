@@ -52,6 +52,27 @@
 - Tự động nhận diện mạng và đồng bộ lên đám mây khi có kết nối lại.
 - Tính năng xuất file sao lưu JSON (Backup) và nạp phục hồi (Restore) có mã hash kiểm tra toàn vẹn.
 
+## 🚀 Tải File Cài Đặt Windows (.EXE) & Phát Hành GitHub
+
+### 1. Đường Link Tải File Cài Đặt Trực Tiếp:
+- **Bộ Cài Đặt Setup (Tự động tạo icon Desktop & Start Menu)**:
+  `https://github.com/thinhxuqb/IQC.new/releases/download/v1.0.0/IQC-by-ThinhXu-Setup-v1.0.0.exe`
+- **Bản Portable (Chạy ngay, không cần cài đặt, thích hợp chạy từ USB)**:
+  `https://github.com/thinhxuqb/IQC.new/releases/download/v1.0.0/IQC-by-ThinhXu-Portable-v1.0.0.exe`
+- **Trang GitHub Releases chính thức**:
+  `https://github.com/thinhxuqb/IQC.new/releases`
+
+### 2. Cách Chạy File .EXE Trên Windows Khi Có Cảnh Báo SmartScreen:
+1. Khi tải về máy tính Windows, nếu Windows SmartScreen hiện thông báo màu xanh *"Windows protected your PC"*, hãy nhấn vào chữ **"More info"**.
+2. Nhấn nút **"Run anyway"**.
+3. Ứng dụng IQC sẽ khởi động ngay lập tức như phần mềm máy tính Desktop bản địa, lưu trữ dữ liệu ngoại tuyến không cần kết nối mạng.
+
+### 3. Tự Động Build File .EXE Bằng GitHub Actions:
+Dự án đã tích hợp sẵn GitHub Actions workflow tại `.github/workflows/build-windows.yml`:
+1. Vào tab **Actions** tại repo: `https://github.com/thinhxuqb/IQC.new/actions`
+2. Chọn workflow **"Build Windows EXE Installer"** $\rightarrow$ nhấn **"Run workflow"**.
+3. Sau ~3 phút, GitHub Runner sẽ tự động biên dịch và phát hành file `.exe` vào mục **Releases** & **Artifacts**.
+
 ---
 
 ## 🛠️ Cài Đặt & Khởi Chạy Dự Án

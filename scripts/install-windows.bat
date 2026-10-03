@@ -9,7 +9,11 @@ echo.
 echo Đang tạo biểu tượng Desktop và cấu hình ứng dụng trên Windows...
 echo.
 
-set APP_URL=https://ais-pre-dgukwgbcuat3e2kdmts5dq-470030224320.asia-southeast1.run.app
+if "%~1"=="" (
+    set APP_URL=https://ais-dev-6d3yat5o2uziir2dccg7xx-653002995870.asia-southeast1.run.app
+) else (
+    set APP_URL=%~1
+)
 set SCRIPT="%TEMP%\CreateIQCShortcut.vbs"
 
 echo Set oWS = WScript.CreateObject("WScript.Shell") >> %SCRIPT%

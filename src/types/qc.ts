@@ -4,8 +4,20 @@
 
 export type UserRole = 'director' | 'manager' | 'technician' | 'auditor';
 
+export interface UserPermissions {
+  canInputQC: boolean;           // Quyền nhập kết quả QC thủ công & nhận LIS
+  canEditMeanSD: boolean;        // Quyền sửa Mean & SD có lưu vết ISO 15189
+  canApproveCapa: boolean;       // Quyền phê duyệt CAPA
+  canManageConfig: boolean;      // Quyền cấu hình máy, xét nghiệm, vật liệu QC
+  canManageUsers: boolean;       // Quyền khai báo người dùng & cấp quyền
+  canExportReports: boolean;     // Quyền xuất báo cáo & ký số
+  canResetDatabase: boolean;     // Quyền khôi phục / sao lưu cơ sở dữ liệu
+}
+
 export interface UserProfile {
   id: string;
+  username: string;
+  password?: string;
   name: string;
   role: UserRole;
   roleTitle: string;
@@ -13,9 +25,11 @@ export interface UserProfile {
   code: string;
   phone: string;
   email: string;
+  active: boolean;
+  permissions: UserPermissions;
 }
 
-export type InstrumentId = 'AU400' | 'SYSMEX800' | 'COBASE411';
+export type InstrumentId = 'AU400' | 'SYSMEX800' | 'COBASE411' | (string & {});
 
 export interface Instrument {
   id: InstrumentId;
@@ -46,6 +60,30 @@ export interface TestAssay {
   method: string;
 }
 
+export interface MeanSdAuditRecord {
+  id: string;
+  lotId: string;
+  assayId: string;
+  assayName: string;
+  instrumentId: InstrumentId;
+  lotNumber: string;
+  level: QCLevel;
+  levelName: string;
+  timestamp: string; // ISO 8601
+  changedBy: string;
+  changedByRole: string;
+  oldMean: number;
+  newMean: number;
+  oldSD: number;
+  newSD: number;
+  oldCV: number;
+  newCV: number;
+  reason: string;
+  reasonCategory: 'NEW_REAGENT_LOT' | 'CUMULATIVE_MEAN_20' | 'MAINTENANCE_CALIBRATION' | 'MANUFACTURER_RECOMMENDATION' | 'OTHER';
+  approvedBy?: string;
+  notes?: string;
+}
+
 export interface QCLot {
   id: string;
   assayId: string;
@@ -60,6 +98,7 @@ export interface QCLot {
   targetSD: number;
   targetCV: number; // Hệ số biến thiên % = (SD / Mean) * 100
   active: boolean;
+  history?: MeanSdAuditRecord[];
 }
 
 export type WestgardRule = '1_2s' | '1_3s' | '2_2s' | 'R_4s' | '4_1s' | '10_x' | '7_T';

@@ -14,9 +14,10 @@ Page instfiles
 Section "Install"
   SetOutPath "$INSTDIR"
 
-  ; Extract app files (including dist, server.ps1, launch.bat)
+  ; Extract app files (including dist, launch.bat)
   File /r "dist\*.*"
   File "public\favicon.ico"
+  File "launch.bat"
 
   ; Create Desktop Shortcut
   CreateShortcut "$DESKTOP\IQC by ThinhXu.lnk" "$INSTDIR\launch.bat" "" "$INSTDIR\favicon.ico" 0 SW_SHOWMINIMIZED

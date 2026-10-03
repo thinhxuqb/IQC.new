@@ -1,5 +1,7 @@
 {
   "name": "iqc-by-thinhxu",
+  "description": "Phần mềm quản lý nội kiểm xét nghiệm y khoa ISO 15189",
+  "author": "ThinhXu",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -7,8 +9,9 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview",
-    "clean": "rm -rf dist dist-electron server.js",
+    "start": "node server.js",
+    "preview": "vite preview --port 3000 --host 0.0.0.0",
+    "clean": "rm -rf dist dist-electron",
     "lint": "tsc --noEmit",
     "electron:build": "vite build && electron-builder --win"
   },

@@ -12,7 +12,9 @@ import {
   FileCheck, 
   History, 
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  FolderArchive,
+  ExternalLink
 } from 'lucide-react';
 
 interface BackupRestoreViewProps {
@@ -202,6 +204,39 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* GitHub Update & Full Source ZIP Card */}
+      <div className="bg-slate-900 text-white rounded-xl p-5 shadow-xs border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <FolderArchive className="w-5 h-5 text-cyan-400" />
+            <h4 className="text-sm font-bold">Cập Nhật Mã Nguồn Lên GitHub (Tự Động Build .EXE)</h4>
+          </div>
+          <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+            Tải gói mã nguồn nén (.ZIP) chứa toàn bộ các chỉnh sửa mới nhất (Khai báo User, Phân quyền, Đăng nhập mật khẩu, Sửa Mean/SD có lưu vết) để cập nhật kho GitHub và kích hoạt tự động đóng gói file .exe.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <a
+            href="/iqc-full-source.zip"
+            download="IQC-Full-Source-Update.zip"
+            className="px-4 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+          >
+            <Download className="w-4 h-4" />
+            <span>Tải Mã Nguồn (.ZIP)</span>
+          </a>
+          <a
+            href="https://github.com/thinhxuqb/IQC.new"
+            target="_blank"
+            rel="noreferrer"
+            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+          >
+            <span>Mở GitHub Repo</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
         </div>
       </div>
 
