@@ -23,6 +23,7 @@ interface BackupRestoreViewProps {
   onToggleOnline: () => void;
   onRestoreState: (newState: AppStateData) => void;
   onForceSync: () => void;
+  onOpenUpdateModal?: () => void;
 }
 
 export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
@@ -31,6 +32,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
   onToggleOnline,
   onRestoreState,
   onForceSync,
+  onOpenUpdateModal,
 }) => {
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
@@ -220,6 +222,15 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {onOpenUpdateModal && (
+            <button
+              onClick={onOpenUpdateModal}
+              className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Kiểm Tra Cập Nhật Thủ Công</span>
+            </button>
+          )}
           <a
             href="/iqc-full-source.zip"
             download="IQC-Full-Source-Update.zip"

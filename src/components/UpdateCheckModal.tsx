@@ -228,7 +228,7 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   <a
-                    href={updateInfo?.exeDownloadUrl || `https://github.com/${GITHUB_REPO}/releases/download/v1.0.0/IQC-by-ThinhXu-Setup-v1.0.0.exe`}
+                    href={updateInfo?.exeDownloadUrl || `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC-by-ThinhXu-Setup-${APP_CURRENT_VERSION}.exe`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors cursor-pointer text-center"
@@ -237,7 +237,7 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                     <span>Bộ Cài Setup (.exe)</span>
                   </a>
                   <a
-                    href={updateInfo?.portableDownloadUrl || `https://github.com/${GITHUB_REPO}/releases/download/v1.0.0/IQC-by-ThinhXu-Portable-v1.0.0.exe`}
+                    href={updateInfo?.portableDownloadUrl || `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC-by-ThinhXu-Portable-${APP_CURRENT_VERSION}.exe`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white hover:bg-slate-50 text-indigo-900 border border-indigo-300 rounded-lg text-xs font-bold shadow-2xs transition-colors cursor-pointer text-center"

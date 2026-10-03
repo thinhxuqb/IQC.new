@@ -40,7 +40,7 @@ import { ManualEntryModal } from './components/ManualEntryModal';
 import { QCReportModal } from './components/QCReportModal';
 import { LoginModal } from './components/LoginModal';
 import { UpdateCheckModal } from './components/UpdateCheckModal';
-import { checkGitHubReleaseUpdate } from './services/updateService';
+import { checkGitHubReleaseUpdate, UpdateInfo } from './services/updateService';
 import { 
   AlertTriangle, 
   Activity, 
@@ -48,7 +48,9 @@ import {
   CheckCircle, 
   ArrowRight, 
   X,
-  FileText
+  FileText,
+  Sparkles,
+  Download
 } from 'lucide-react';
 
 export default function App() {
@@ -68,6 +70,10 @@ export default function App() {
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
+
+  // Bản cập nhật mới phát hiện khi khởi động
+  const [availableUpdate, setAvailableUpdate] = useState<UpdateInfo | null>(null);
+  const [dismissedUpdatePrompt, setDismissedUpdatePrompt] = useState<boolean>(false);
 
   // Toast thông báo tức thì khi máy truyền kết quả vi phạm
   const [activeAlert, setActiveAlert] = useState<{
@@ -90,17 +96,21 @@ export default function App() {
     };
   }, []);
 
-  // Tự động kiểm tra bản cập nhật mới trên GitHub khi khởi động ứng dụng
+  // Tự động quét bản cập nhật mới trên GitHub khi khởi động ứng dụng
   useEffect(() => {
     const autoCheck = localStorage.getItem('iqc_auto_check_update') !== 'false';
     if (autoCheck) {
       const timer = setTimeout(() => {
         checkGitHubReleaseUpdate().then((info) => {
           if (info.hasUpdate) {
+            setAvailableUpdate(info);
+            // Tự động mở hộp thoại hỏi người dùng có đồng ý cập nhật không
             setIsUpdateModalOpen(true);
           }
-        }).catch(() => {});
-      }, 3500);
+        }).catch((err) => {
+          console.warn('Lỗi kiểm tra bản cập nhật khi khởi động:', err);
+        });
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -354,6 +364,46 @@ export default function App() {
         onOpenUpdateModal={() => setIsUpdateModalOpen(true)}
       />
 
+      {/* Auto Update Available Confirmation Banner (Hỏi đồng ý cập nhật) */}
+      {availableUpdate && !dismissedUpdatePrompt && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3 w-full no-print">
+          <div className="p-4 rounded-xl border border-indigo-300 bg-gradient-to-r from-indigo-50 via-sky-50 to-indigo-100 text-indigo-950 shadow-md flex flex-wrap items-center justify-between gap-4 animate-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                <Sparkles className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm flex items-center gap-2">
+                  <span>Phát hiện bản cập nhật mới: {availableUpdate.latestVersion}</span>
+                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-900 font-bold">
+                    Khuyên dùng
+                  </span>
+                </h4>
+                <p className="text-xs text-indigo-800 mt-0.5 max-w-2xl">
+                  {availableUpdate.releaseName} — Bạn có muốn đồng ý cập nhật ứng dụng ngay bây giờ để nhận các tính năng và sửa lỗi mới nhất?
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsUpdateModalOpen(true)}
+                className="px-3.5 py-2 bg-indigo-700 hover:bg-indigo-800 text-white rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Đồng Ý Cập Nhật</span>
+              </button>
+              <button
+                onClick={() => setDismissedUpdatePrompt(true)}
+                className="px-3 py-2 bg-white/80 hover:bg-white text-indigo-900 border border-indigo-200 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Để Sau
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Instant Westgard Incident Alert Toast */}
       {activeAlert && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full no-print">
@@ -576,6 +626,7 @@ export default function App() {
             onToggleOnline={() => setIsOnline(!isOnline)}
             onRestoreState={(newState) => setAppState(newState)}
             onForceSync={handleForceSync}
+            onOpenUpdateModal={() => setIsUpdateModalOpen(true)}
           />
         )}
       </main>
