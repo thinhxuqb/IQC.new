@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Instrument, 
+  LabInfo,
   MeanSdAuditRecord, 
   QCLevel, 
   QCLot, 
@@ -34,7 +35,14 @@ import {
   Shield,
   KeyRound,
   Lock,
-  Network
+  Network,
+  Building2,
+  Hospital,
+  MapPin,
+  Phone,
+  Mail,
+  Globe,
+  Award
 } from 'lucide-react';
 import { EditMeanSdModal } from './EditMeanSdModal';
 import { InstrumentModal } from './InstrumentModal';
@@ -42,6 +50,7 @@ import { AssayModal } from './AssayModal';
 import { UserModal } from './UserModal';
 import { MaterialModal } from './MaterialModal';
 import { MappingModal } from './MappingModal';
+import { LabInfoModal } from './LabInfoModal';
 
 interface QCConfigViewProps {
   instruments: Instrument[];
@@ -52,6 +61,8 @@ interface QCConfigViewProps {
   meanSdAuditHistory: MeanSdAuditRecord[];
   currentUser: UserProfile;
   users: UserProfile[];
+  labInfo: LabInfo;
+  onSaveLabInfo: (info: LabInfo) => void;
   onUpdateLot: (updatedLot: QCLot, auditRecord?: MeanSdAuditRecord) => void;
   onDeleteLot: (lotId: string) => void;
   onSaveAssay: (assay: TestAssay) => void;
@@ -75,6 +86,8 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
   meanSdAuditHistory,
   currentUser,
   users,
+  labInfo,
+  onSaveLabInfo,
   onUpdateLot,
   onDeleteLot,
   onSaveAssay,
@@ -88,8 +101,8 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
   onSaveMapping,
   onDeleteMapping,
 }) => {
-  // Tabs: Bước 1: Thiết Bị -> Bước 2: Xét Nghiệm -> Bước 3: Vật Liệu QC -> Bước 4: Map Kiểm Chuẩn -> Bước 5: Lưu Vết -> Bước 6: Người Dùng
-  const [activeTab, setActiveTab] = useState<'mappings' | 'materials' | 'assays' | 'instruments' | 'audit' | 'users'>('mappings');
+  // Tabs: Bước 1: Thiết Bị -> Bước 2: Xét Nghiệm -> Bước 3: Vật Liệu QC -> Bước 4: Map Kiểm Chuẩn -> Bước 5: Lưu Vết -> Bước 6: Người Dùng -> Bước 7: Phòng Xét Nghiệm
+  const [activeTab, setActiveTab] = useState<'mappings' | 'materials' | 'assays' | 'instruments' | 'audit' | 'users' | 'labInfo'>('mappings');
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -98,6 +111,7 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
   const [selectedMaterialFilter, setSelectedMaterialFilter] = useState<string>('ALL');
 
   // Modal states
+  const [isLabInfoModalOpen, setIsLabInfoModalOpen] = useState<boolean>(false);
   const [editingMaterial, setEditingMaterial] = useState<QCMaterial | null>(null);
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState<boolean>(false);
 
@@ -333,6 +347,16 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
               <span>Khai Báo Người Dùng Mới</span>
             </button>
           )}
+
+          {activeTab === 'labInfo' && (
+            <button
+              onClick={() => setIsLabInfoModalOpen(true)}
+              className="px-3.5 py-2 text-xs font-bold text-white bg-indigo-700 hover:bg-indigo-800 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>Sửa Thông Tin Phòng Xét Nghiệm</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -431,6 +455,22 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
           <span>Người Dùng & Phân Quyền</span>
           <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-800">
             {users.length}
+          </span>
+        </button>
+
+        {/* Thông tin phòng xét nghiệm */}
+        <button
+          onClick={() => setActiveTab('labInfo')}
+          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+            activeTab === 'labInfo'
+              ? 'border-indigo-700 text-indigo-900 bg-indigo-50/80 rounded-t-lg shadow-inner'
+              : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg'
+          }`}
+        >
+          <Building2 className="w-4 h-4 text-indigo-600" />
+          <span>Thông Tin Phòng Xét Nghiệm</span>
+          <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-100 text-indigo-800 font-bold">
+            ISO
           </span>
         </button>
       </div>
@@ -1116,6 +1156,258 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
       )}
 
       {/* ======================================================== */}
+      {/* TAB 7: THÔNG TIN PHÒNG XÉT NGHIỆM (LAB INFO)              */}
+      {/* ======================================================== */}
+      {activeTab === 'labInfo' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Header Card */}
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 rounded-2xl shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold shrink-0 border border-indigo-500/30">
+                <Building2 className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-lg font-bold">
+                    {labInfo.hospitalName} · {labInfo.name}
+                  </h3>
+                  <span className="text-[10px] uppercase font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                    {labInfo.accreditationStandard}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-1">
+                  Mã cơ sở: <span className="font-mono font-bold text-white">{labInfo.labCode}</span> · {labInfo.department}
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                  <span>{labInfo.address}</span>
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsLabInfoModalOpen(true)}
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-2 transition-all shrink-0 cursor-pointer self-start md:self-auto"
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>Chỉnh Sửa Thông Tin</span>
+            </button>
+          </div>
+
+          {/* 4 Detail Grid Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Card 1: Cơ Sở & Đơn Vị */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <Hospital className="w-4 h-4 text-indigo-600" />
+                  <span>Đơn Vị & Cơ Sở Xét Nghiệm</span>
+                </h4>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                  {labInfo.labCode}
+                </span>
+              </div>
+              <div className="text-xs space-y-2">
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Đơn vị chủ quản / Bệnh viện:</span>
+                  <span className="font-bold text-slate-900 text-sm">{labInfo.hospitalName}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Tên phòng xét nghiệm:</span>
+                  <span className="font-semibold text-slate-800">{labInfo.name}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Khoa / Phân khoa chuyên môn:</span>
+                  <span className="text-slate-700">{labInfo.department}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Địa Chỉ & Liên Hệ */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-emerald-600" />
+                  <span>Địa Chỉ Cơ Sở & Kênh Liên Hệ</span>
+                </h4>
+                <Phone className="w-3.5 h-3.5 text-slate-400" />
+              </div>
+              <div className="text-xs space-y-2">
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Địa chỉ trụ sở khoa:</span>
+                  <span className="text-slate-800 font-medium">{labInfo.address}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Số điện thoại / Hotline:</span>
+                    <span className="font-mono font-bold text-indigo-950">{labInfo.phone}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Email liên hệ:</span>
+                    <span className="font-mono text-slate-700">{labInfo.email || 'Chưa cấu hình'}</span>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Website tra cứu:</span>
+                  <span className="font-mono text-indigo-600 truncate block">
+                    {labInfo.website || 'Chưa cấu hình'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Nhân Sự Phê Duyệt ISO 15189 */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-sky-600" />
+                  <span>Lãnh Đạo & Nhân Sự Phê Duyệt Hồ Sơ</span>
+                </h4>
+                <Award className="w-3.5 h-3.5 text-slate-400" />
+              </div>
+              <div className="text-xs space-y-3">
+                <div className="p-2.5 bg-slate-50 rounded-lg">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Trưởng Khoa Xét Nghiệm</span>
+                  <span className="font-bold text-slate-900 text-sm block">{labInfo.headOfDepartment}</span>
+                  <span className="text-[11px] text-slate-500">{labInfo.headTitle}</span>
+                </div>
+                <div className="p-2.5 bg-slate-50 rounded-lg">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Phụ Trách Kỹ Thuật & QLCL QC</span>
+                  <span className="font-bold text-slate-900 text-sm block">{labInfo.technicalSupervisor}</span>
+                  <span className="text-[11px] text-slate-500">{labInfo.supervisorTitle}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Tiêu Chuẩn & Mẫu Báo Cáo */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-amber-600" />
+                  <span>Tiêu Chuẩn & Biểu Mẫu Báo Cáo QC</span>
+                </h4>
+                <FileText className="w-3.5 h-3.5 text-slate-400" />
+              </div>
+              <div className="text-xs space-y-2">
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Tiêu chuẩn quản lý chất lượng:</span>
+                  <span className="font-bold text-slate-900">{labInfo.accreditationStandard}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Tiền tố mã biểu mẫu hồ sơ:</span>
+                  <span className="font-mono font-bold text-indigo-700">{labInfo.documentCodePrefix}</span>
+                </div>
+                {labInfo.slogan && (
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Khẩu hiệu / Tiêu chí chất lượng:</span>
+                    <span className="italic text-slate-700">"{labInfo.slogan}"</span>
+                  </div>
+                )}
+                {labInfo.notes && (
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Ghi chú chất lượng:</span>
+                    <span className="text-slate-600">{labInfo.notes}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Simulation Preview Card */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-600" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                  Xem Trước Mẫu Tiêu Đề Báo Cáo In / Xuất PDF (ISO 15189)
+                </h4>
+              </div>
+              <button
+                onClick={() => setIsLabInfoModalOpen(true)}
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Sửa Tiêu Đề Này</span>
+              </button>
+            </div>
+
+            <div className="p-6 bg-slate-50/70 border border-slate-200 rounded-xl space-y-4 font-sans">
+              <div className="flex justify-between items-start border-b-2 border-slate-900 pb-3">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                    {labInfo.hospitalName} · {labInfo.name}
+                  </h4>
+                  <p className="text-[11px] text-slate-600 font-medium">
+                    {labInfo.department}
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Đ/C: {labInfo.address} · Hotline: {labInfo.phone}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                    Mã biểu mẫu: {labInfo.documentCodePrefix}-GLU-2026 · Mã CS: {labInfo.labCode}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="inline-block border border-slate-900 text-slate-900 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-white">
+                    {labInfo.accreditationStandard}
+                  </span>
+                  <p className="text-[10px] text-slate-500 font-mono mt-1">
+                    Ngày in: {new Date().toLocaleDateString('vi-VN')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-center pt-2">
+                <h3 className="text-sm font-bold uppercase tracking-tight text-slate-900">
+                  BÁO CÁO TỔNG HỢP VÀ ĐÁNH GIÁ NỘI KIỂM CHẤT LƯỢNG (IQC)
+                </h3>
+                {labInfo.slogan && (
+                  <p className="text-[11px] italic text-slate-500 mt-0.5">
+                    "{labInfo.slogan}"
+                  </p>
+                )}
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 grid grid-cols-3 gap-4 text-center text-[11px]">
+                <div className="space-y-8">
+                  <div>
+                    <p className="font-bold text-slate-800 uppercase">Kỹ Thuật Viên</p>
+                    <p className="text-[10px] text-slate-500">(Ký & ghi rõ họ tên)</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900">KTV. Trần Quốc Tuấn</p>
+                    <p className="text-[10px] text-slate-500 font-mono">KTV-082</p>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <div>
+                    <p className="font-bold text-slate-800 uppercase">Phụ Trách Quản Lý QC</p>
+                    <p className="text-[10px] text-slate-500">({labInfo.supervisorTitle || 'Ký & ghi rõ họ tên'})</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900">{labInfo.technicalSupervisor}</p>
+                    <p className="text-[10px] text-slate-500 font-mono">QLCL-ISO15189</p>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <div>
+                    <p className="font-bold text-slate-800 uppercase">Trưởng Khoa Xét Nghiệm</p>
+                    <p className="text-[10px] text-slate-500">({labInfo.headTitle || 'Phê duyệt & Đóng dấu'})</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900">{labInfo.headOfDepartment}</p>
+                    <p className="text-[10px] text-slate-500 font-mono">{labInfo.labCode}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
       {/* MODALS                                                   */}
       {/* ======================================================== */}
       {/* Modal Vật Liệu QC */}
@@ -1171,6 +1463,14 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
         onClose={() => setIsUserModalOpen(false)}
         onSave={onSaveUser}
         userToEdit={editingUser}
+      />
+
+      {/* Modal Chỉnh Sửa Thông Tin Phòng Xét Nghiệm */}
+      <LabInfoModal
+        isOpen={isLabInfoModalOpen}
+        onClose={() => setIsLabInfoModalOpen(false)}
+        labInfo={labInfo}
+        onSaveLabInfo={onSaveLabInfo}
       />
     </div>
   );

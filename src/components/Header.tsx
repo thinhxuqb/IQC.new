@@ -1,5 +1,6 @@
 import React from 'react';
-import { UserProfile } from '../types/qc';
+import { LabInfo, UserProfile } from '../types/qc';
+import { APP_CURRENT_VERSION } from '../services/updateService';
 import { 
   Activity, 
   FileText, 
@@ -17,7 +18,8 @@ import {
   Sliders,
   LogOut,
   LogIn,
-  KeyRound
+  KeyRound,
+  Building2
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -32,6 +34,8 @@ interface HeaderProps {
   pendingSyncCount: number;
   unresolvedCapaCount: number;
   onOpenUpdateModal?: () => void;
+  labInfo?: LabInfo;
+  onOpenLabInfoModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -46,6 +50,8 @@ export const Header: React.FC<HeaderProps> = ({
   pendingSyncCount,
   unresolvedCapaCount,
   onOpenUpdateModal,
+  labInfo,
+  onOpenLabInfoModal,
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Bảng điều khiển', icon: Activity },
@@ -66,13 +72,26 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-xs tracking-wider shadow-sm">
               IQC
             </div>
-            <a 
-              href="#" 
-              onClick={(e) => { e.preventDefault(); onSelectTab('dashboard'); }}
-              className="text-base font-bold tracking-tight text-slate-900 flex items-center gap-2 hover:text-cyan-700 transition-colors"
-            >
-              <span>IQC by ThinhXu</span>
-            </a>
+            <div className="flex flex-col">
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); onSelectTab('dashboard'); }}
+                className="text-base font-bold tracking-tight text-slate-900 flex items-center gap-2 hover:text-cyan-700 transition-colors"
+              >
+                <span>IQC by ThinhXu</span>
+              </a>
+              {labInfo && (
+                <button
+                  type="button"
+                  onClick={onOpenLabInfoModal}
+                  title="Nhấp để chỉnh sửa thông tin phòng xét nghiệm"
+                  className="text-[11px] text-slate-500 hover:text-indigo-600 truncate max-w-[240px] text-left flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Building2 className="w-3 h-3 text-indigo-500 shrink-0" />
+                  <span className="truncate font-medium">{labInfo.hospitalName || labInfo.name}</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Zone 2: Navigation Links */}
@@ -129,12 +148,12 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={onOpenUpdateModal}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50/95 hover:bg-indigo-100 text-indigo-900 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
-                title="Kiểm tra & Cập nhật phiên bản mới nhất từ GitHub Releases (v1.1.1)"
+                title={`Kiểm tra & Cập nhật phiên bản mới nhất từ GitHub Releases (${APP_CURRENT_VERSION})`}
               >
                 <RefreshCw className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                 <span className="font-bold">Cập Nhật</span>
                 <span className="text-[10px] font-mono font-bold bg-indigo-200 text-indigo-800 px-1 py-0.5 rounded-xs">
-                  v1.1.1
+                  {APP_CURRENT_VERSION}
                 </span>
               </button>
             )}

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Instrument, QCLot, QCResult, TestAssay, UserProfile } from '../types/qc';
+import { Instrument, LabInfo, QCLot, QCResult, TestAssay, UserProfile } from '../types/qc';
+import { DEFAULT_LAB_INFO } from '../utils/initialData';
 import { calculateQCStatistics } from '../utils/westgard';
 import { 
   Printer, 
@@ -20,6 +21,7 @@ interface QCReportModalProps {
   lots: QCLot[];
   results: QCResult[];
   currentUser: UserProfile;
+  labInfo?: LabInfo;
 }
 
 export const QCReportModal: React.FC<QCReportModalProps> = ({
@@ -30,8 +32,11 @@ export const QCReportModal: React.FC<QCReportModalProps> = ({
   lots,
   results,
   currentUser,
+  labInfo,
 }) => {
   if (!isOpen) return null;
+
+  const currentLabInfo: LabInfo = labInfo || DEFAULT_LAB_INFO;
 
   // Cấu hình khoảng thời gian xuất báo cáo
   const [reportPeriodType, setReportPeriodType] = useState<'month' | 'last_month' | '30d' | 'quarter' | 'year' | 'custom'>('month');
@@ -316,23 +321,31 @@ export const QCReportModal: React.FC<QCReportModalProps> = ({
           <div className="border-b-2 border-slate-900 pb-4 mb-6">
             <div className="flex justify-between items-start">
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                  BỆNH VIỆN ĐA KHOA TRUNG TÂM · KHOA XÉT NGHIỆM
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                  {currentLabInfo.hospitalName} · {currentLabInfo.name}
                 </h4>
-                <p className="text-[11px] text-slate-500">
-                  Phòng Quản Lý Chất Lượng Xét Nghiệm (Quality Assurance Office)
+                <p className="text-[11px] text-slate-600 font-medium">
+                  {currentLabInfo.department}
                 </p>
-                <p className="text-[10px] text-slate-400 font-mono">
-                  Mã tài liệu: ISO15189-BM-QC-{currentAssay?.code || 'LAB'}-2026
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  Đ/C: {currentLabInfo.address} · Hotline: {currentLabInfo.phone}
+                </p>
+                <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                  Mã biểu mẫu: {currentLabInfo.documentCodePrefix}-{currentAssay?.code || 'LAB'}-2026 · Mã CS: {currentLabInfo.labCode}
                 </p>
               </div>
               <div className="text-right">
-                <span className="inline-block border border-slate-900 text-slate-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                  TIÊU CHUẨN ISO 15189:2022
+                <span className="inline-block border border-slate-900 text-slate-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-slate-50">
+                  {currentLabInfo.accreditationStandard}
                 </span>
                 <p className="text-[10px] text-slate-500 font-mono mt-1">
                   Ngày in báo cáo: {new Date().toLocaleDateString('vi-VN')}
                 </p>
+                {currentLabInfo.email && (
+                  <p className="text-[10px] text-slate-500 font-mono">
+                    {currentLabInfo.email}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -343,6 +356,11 @@ export const QCReportModal: React.FC<QCReportModalProps> = ({
               <p className="text-xs text-slate-600 mt-1">
                 Kỳ đánh giá: <strong className="text-slate-900">{periodTitle}</strong> · Xét nghiệm: <strong className="text-slate-900">{currentAssay?.name} ({currentAssay?.code})</strong>
               </p>
+              {currentLabInfo.slogan && (
+                <p className="text-[10px] italic text-slate-500 mt-0.5">
+                  "{currentLabInfo.slogan}"
+                </p>
+              )}
             </div>
           </div>
 
@@ -666,30 +684,30 @@ export const QCReportModal: React.FC<QCReportModalProps> = ({
                 <p className="text-[10px] text-slate-500">(Ký và ghi rõ họ tên)</p>
               </div>
               <div>
-                <p className="font-bold text-slate-900">CN. Trần Quốc Tuấn</p>
-                <p className="text-[10px] text-slate-500 font-mono">KTV-082</p>
+                <p className="font-bold text-slate-900">{currentUser.name || 'CN. Trần Quốc Tuấn'}</p>
+                <p className="text-[10px] text-slate-500 font-mono">{currentUser.code || 'KTV-082'}</p>
               </div>
             </div>
 
             <div className="space-y-16">
               <div>
                 <p className="font-bold text-slate-900 uppercase">Phụ Trách Quản Lý QC</p>
-                <p className="text-[10px] text-slate-500">(Ký và ghi rõ họ tên)</p>
+                <p className="text-[10px] text-slate-500">({currentLabInfo.supervisorTitle || 'Ký và ghi rõ họ tên'})</p>
               </div>
               <div>
-                <p className="font-bold text-slate-900">ThS. Lê Thị Thanh Mai</p>
-                <p className="text-[10px] text-slate-500 font-mono">KTVT-014</p>
+                <p className="font-bold text-slate-900">{currentLabInfo.technicalSupervisor}</p>
+                <p className="text-[10px] text-slate-500 font-mono">QLCL-ISO15189</p>
               </div>
             </div>
 
             <div className="space-y-16">
               <div>
                 <p className="font-bold text-slate-900 uppercase">Trưởng Khoa Xét Nghiệm</p>
-                <p className="text-[10px] text-slate-500">(Phê duyệt & Đóng dấu)</p>
+                <p className="text-[10px] text-slate-500">({currentLabInfo.headTitle || 'Phê duyệt & Đóng dấu'})</p>
               </div>
               <div>
-                <p className="font-bold text-slate-900">TS. BS. Nguyễn Văn Hùng</p>
-                <p className="text-[10px] text-slate-500 font-mono">BSXN-001</p>
+                <p className="font-bold text-slate-900">{currentLabInfo.headOfDepartment}</p>
+                <p className="text-[10px] text-slate-500 font-mono">{currentLabInfo.labCode}</p>
               </div>
             </div>
           </div>

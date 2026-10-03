@@ -1,5 +1,5 @@
-import { AuditLog, Instrument, MeanSdAuditRecord, QCLot, QCMaterial, QCMapping, QCResult, TestAssay, UserProfile } from '../types/qc';
-import { generateInitialResults, INITIAL_ASSAYS, INITIAL_INSTRUMENTS, INITIAL_LOTS, INITIAL_MATERIALS, INITIAL_MAPPINGS, INITIAL_USERS } from './initialData';
+import { AuditLog, Instrument, LabInfo, MeanSdAuditRecord, QCLot, QCMaterial, QCMapping, QCResult, TestAssay, UserProfile } from '../types/qc';
+import { DEFAULT_LAB_INFO, generateInitialResults, INITIAL_ASSAYS, INITIAL_INSTRUMENTS, INITIAL_LOTS, INITIAL_MATERIALS, INITIAL_MAPPINGS, INITIAL_USERS } from './initialData';
 
 export const INITIAL_MEAN_SD_AUDIT: MeanSdAuditRecord[] = [
   {
@@ -62,6 +62,7 @@ const STORAGE_KEYS = {
   USERS: 'qc_lab_users_v2',
   MATERIALS: 'qc_lab_materials_v2',
   MAPPINGS: 'qc_lab_mappings_v2',
+  LAB_INFO: 'qc_lab_info_v2',
 };
 
 export interface AppStateData {
@@ -75,6 +76,7 @@ export interface AppStateData {
   users: UserProfile[];
   materials: QCMaterial[];
   qcMappings: QCMapping[];
+  labInfo: LabInfo;
 }
 
 /**
@@ -92,6 +94,7 @@ export function loadAppState(): AppStateData {
     const rawUsers = localStorage.getItem(STORAGE_KEYS.USERS);
     const rawMaterials = localStorage.getItem(STORAGE_KEYS.MATERIALS);
     const rawMappings = localStorage.getItem(STORAGE_KEYS.MAPPINGS);
+    const rawLabInfo = localStorage.getItem(STORAGE_KEYS.LAB_INFO);
 
     const instruments: Instrument[] = rawInstruments ? JSON.parse(rawInstruments) : INITIAL_INSTRUMENTS;
     const assays: TestAssay[] = rawAssays ? JSON.parse(rawAssays) : INITIAL_ASSAYS;
@@ -101,6 +104,7 @@ export function loadAppState(): AppStateData {
     const meanSdAuditHistory: MeanSdAuditRecord[] = rawAudit ? JSON.parse(rawAudit) : INITIAL_MEAN_SD_AUDIT;
     const materials: QCMaterial[] = rawMaterials ? JSON.parse(rawMaterials) : INITIAL_MATERIALS;
     const qcMappings: QCMapping[] = rawMappings ? JSON.parse(rawMappings) : INITIAL_MAPPINGS;
+    const labInfo: LabInfo = rawLabInfo ? JSON.parse(rawLabInfo) : DEFAULT_LAB_INFO;
 
     const logs: AuditLog[] = rawLogs ? JSON.parse(rawLogs) : [
       {
@@ -122,7 +126,7 @@ export function loadAppState(): AppStateData {
       localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(results));
     }
 
-    return { results, lots, assays, instruments, logs, currentUser, meanSdAuditHistory, users, materials, qcMappings };
+    return { results, lots, assays, instruments, logs, currentUser, meanSdAuditHistory, users, materials, qcMappings, labInfo };
   } catch (error) {
     console.error('Lỗi khi tải dữ liệu QC từ bộ nhớ cục bộ:', error);
     return {
@@ -136,6 +140,7 @@ export function loadAppState(): AppStateData {
       users: INITIAL_USERS,
       materials: INITIAL_MATERIALS,
       qcMappings: INITIAL_MAPPINGS,
+      labInfo: DEFAULT_LAB_INFO,
     };
   }
 }
@@ -256,13 +261,24 @@ export function saveQCMappings(mappings: QCMapping[]) {
 }
 
 /**
+ * Lưu thông tin phòng xét nghiệm (Tên, địa chỉ, người phụ trách...)
+ */
+export function saveLabInfo(labInfo: LabInfo) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.LAB_INFO, JSON.stringify(labInfo));
+  } catch (err) {
+    console.error('Không thể lưu LabInfo:', err);
+  }
+}
+
+/**
  * Xuất dữ liệu sao lưu ra file JSON
  */
 export function exportBackupData(state: AppStateData): string {
   const backupObject = {
     appVersion: '2.5.0-ISO15189',
     exportedAt: new Date().toISOString(),
-    laboratory: 'Khoa Xét Nghiệm Y Khoa Chuẩn ISO 15189',
+    laboratory: state.labInfo.name || 'Khoa Xét Nghiệm Y Khoa Chuẩn ISO 15189',
     checksum: `QC-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
     data: {
       results: state.results,
@@ -274,6 +290,7 @@ export function exportBackupData(state: AppStateData): string {
       users: state.users,
       materials: state.materials,
       qcMappings: state.qcMappings,
+      labInfo: state.labInfo,
     },
   };
   return JSON.stringify(backupObject, null, 2);
@@ -288,7 +305,7 @@ export function importBackupData(jsonString: string): AppStateData | null {
     if (!parsed.data || !Array.isArray(parsed.data.results)) {
       throw new Error('Định dạng tệp sao lưu không hợp lệ!');
     }
-    const { results, lots, assays, instruments, logs, meanSdAuditHistory, users, materials, qcMappings } = parsed.data;
+    const { results, lots, assays, instruments, logs, meanSdAuditHistory, users, materials, qcMappings, labInfo } = parsed.data;
     localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(results));
     if (lots) localStorage.setItem(STORAGE_KEYS.LOTS, JSON.stringify(lots));
     if (assays) localStorage.setItem(STORAGE_KEYS.ASSAYS, JSON.stringify(assays));
@@ -298,6 +315,7 @@ export function importBackupData(jsonString: string): AppStateData | null {
     if (users) localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
     if (materials) localStorage.setItem(STORAGE_KEYS.MATERIALS, JSON.stringify(materials));
     if (qcMappings) localStorage.setItem(STORAGE_KEYS.MAPPINGS, JSON.stringify(qcMappings));
+    if (labInfo) localStorage.setItem(STORAGE_KEYS.LAB_INFO, JSON.stringify(labInfo));
 
     return {
       results,
@@ -310,6 +328,7 @@ export function importBackupData(jsonString: string): AppStateData | null {
       users: users || INITIAL_USERS,
       materials: materials || INITIAL_MATERIALS,
       qcMappings: qcMappings || INITIAL_MAPPINGS,
+      labInfo: labInfo || DEFAULT_LAB_INFO,
     };
   } catch (err) {
     console.error('Lỗi khi phục hồi tệp sao lưu:', err);
@@ -330,6 +349,7 @@ export function resetDemoDatabase(): AppStateData {
   localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
   localStorage.setItem(STORAGE_KEYS.MATERIALS, JSON.stringify(INITIAL_MATERIALS));
   localStorage.setItem(STORAGE_KEYS.MAPPINGS, JSON.stringify(INITIAL_MAPPINGS));
+  localStorage.setItem(STORAGE_KEYS.LAB_INFO, JSON.stringify(DEFAULT_LAB_INFO));
   
   const resetLog: AuditLog = {
     id: `log_reset_${Date.now()}`,
@@ -338,7 +358,7 @@ export function resetDemoDatabase(): AppStateData {
     userName: INITIAL_USERS[0].name,
     role: INITIAL_USERS[0].role,
     action: 'KHÔI_PHỤC_DỮ_LIỆU_CHUẨN',
-    details: 'Đã nạp lại cơ sở dữ liệu mẫu chuẩn y khoa 30 ngày cho AU400, Sysmex 800 và Cobas e411.',
+    details: 'Đã nạp lại cơ sở dữ liệu mẫu chuẩn y khoa 30 ngày cho AU400, Sysmex 800 và Cobas e411 kèm thông tin phòng xét nghiệm chuẩn ISO 15189.',
   };
   localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify([resetLog]));
 
@@ -353,5 +373,6 @@ export function resetDemoDatabase(): AppStateData {
     users: INITIAL_USERS,
     materials: INITIAL_MATERIALS,
     qcMappings: INITIAL_MAPPINGS,
+    labInfo: DEFAULT_LAB_INFO,
   };
 }

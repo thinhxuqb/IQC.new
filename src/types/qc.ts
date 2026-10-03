@@ -12,6 +12,26 @@ export interface UserPermissions {
   canManageUsers: boolean;       // Quyền khai báo người dùng & cấp quyền
   canExportReports: boolean;     // Quyền xuất báo cáo & ký số
   canResetDatabase: boolean;     // Quyền khôi phục / sao lưu cơ sở dữ liệu
+  canEditLabInfo?: boolean;      // Quyền chỉnh sửa thông tin phòng xét nghiệm
+}
+
+export interface LabInfo {
+  name: string;                   // Tên phòng xét nghiệm / Trung tâm xét nghiệm
+  hospitalName: string;           // Tên bệnh viện / Đơn vị chủ quản
+  department: string;             // Khoa / Bộ phận chuyên môn
+  address: string;                // Địa chỉ cơ sở
+  phone: string;                  // Số điện thoại / Hotline
+  email: string;                  // Email liên hệ
+  website: string;                // Website tra cứu
+  labCode: string;                // Mã cơ sở / Mã phòng xét nghiệm ISO
+  headOfDepartment: string;       // Họ tên Trưởng khoa xét nghiệm
+  headTitle: string;              // Chức danh / Học hàm học vị Trưởng khoa
+  technicalSupervisor: string;     // Phụ trách kỹ thuật / Quản lý chất lượng QC
+  supervisorTitle: string;        // Chức danh phụ trách chất lượng
+  accreditationStandard: string;  // Tiêu chuẩn áp dụng (vd: ISO 15189:2022)
+  documentCodePrefix: string;     // Tiền tố mã biểu mẫu QC (vd: ISO15189-BM-QC)
+  slogan?: string;                // Khẩu hiệu / Tiêu chí chất lượng
+  notes?: string;                 // Ghi chú thêm
 }
 
 export interface UserProfile {

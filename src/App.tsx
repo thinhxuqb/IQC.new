@@ -9,6 +9,7 @@ import {
   CapaRecord, 
   Instrument, 
   InstrumentId, 
+  LabInfo,
   MeanSdAuditRecord, 
   QCLot, 
   QCMaterial,
@@ -24,6 +25,7 @@ import {
   saveAuditLog, 
   saveCurrentUser, 
   saveInstruments, 
+  saveLabInfo,
   saveLots, 
   saveMaterials,
   saveQCMappings,
@@ -45,6 +47,7 @@ import { ManualEntryModal } from './components/ManualEntryModal';
 import { QCReportModal } from './components/QCReportModal';
 import { LoginModal } from './components/LoginModal';
 import { UpdateCheckModal } from './components/UpdateCheckModal';
+import { LabInfoModal } from './components/LabInfoModal';
 import { checkGitHubReleaseUpdate, UpdateInfo } from './services/updateService';
 import { 
   AlertTriangle, 
@@ -75,7 +78,9 @@ export default function App() {
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
+  const [isLabInfoModalOpen, setIsLabInfoModalOpen] = useState<boolean>(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => localStorage.getItem('qc_lab_is_logged_in') !== 'false');
+  const [syncToastMessage, setSyncToastMessage] = useState<string | null>(null);
 
   const handleLogout = () => {
     setIsLoggedIn(false);
@@ -264,7 +269,8 @@ export default function App() {
   const handleForceSync = () => {
     setTimeout(() => {
       setPendingSyncCount(0);
-      alert('Đã đồng bộ toàn bộ cơ sở dữ liệu nội kiểm với máy chủ đám mây an toàn.');
+      setSyncToastMessage('Đã đồng bộ toàn bộ cơ sở dữ liệu nội kiểm với máy chủ đám mây an toàn.');
+      setTimeout(() => setSyncToastMessage(null), 4000);
     }, 400);
   };
 
@@ -468,6 +474,26 @@ export default function App() {
     setAppState((prev) => ({ ...prev, qcMappings: updatedMappings }));
   };
 
+  // Cập nhật Thông Tin Phòng Xét Nghiệm ISO 15189
+  const handleSaveLabInfo = (info: LabInfo) => {
+    saveLabInfo(info);
+    const log: AuditLog = {
+      id: `log_lab_${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      userId: appState.currentUser.id,
+      userName: appState.currentUser.name,
+      role: appState.currentUser.role,
+      action: 'CẬP_NHẬT_THÔNG_TIN_PHÒNG_XÉT_NGHIỆM',
+      details: `Cập nhật hồ sơ cơ sở: ${info.hospitalName} · ${info.name}. Trưởng khoa: ${info.headOfDepartment}.`,
+    };
+    saveAuditLog(log);
+    setAppState((prev) => ({
+      ...prev,
+      labInfo: info,
+      logs: [log, ...prev.logs],
+    }));
+  };
+
   const selectedAssay = appState.assays.find((a) => a.id === selectedAssayId) || appState.assays[0];
   const selectedAssayLots = appState.lots.filter((l) => l.assayId === selectedAssay?.id);
 
@@ -486,6 +512,8 @@ export default function App() {
         pendingSyncCount={pendingSyncCount}
         unresolvedCapaCount={unresolvedCapaCount}
         onOpenUpdateModal={() => setIsUpdateModalOpen(true)}
+        labInfo={appState.labInfo}
+        onOpenLabInfoModal={() => setIsLabInfoModalOpen(true)}
       />
 
       {/* Auto Update Available Confirmation Banner (Hỏi đồng ý cập nhật) */}
@@ -578,7 +606,29 @@ export default function App() {
 
             <button
               onClick={() => setActiveAlert(null)}
-              className="text-slate-400 hover:text-slate-600 p-1"
+              className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sync Notification Toast */}
+      {syncToastMessage && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full no-print">
+          <div className="p-4 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-950 shadow-md flex items-center justify-between gap-4 animate-in slide-in-from-top-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-200 text-emerald-800 shrink-0">
+                <CheckCircle className="w-5 h-5" />
+              </div>
+              <p className="text-xs sm:text-sm font-semibold text-emerald-900">
+                {syncToastMessage}
+              </p>
+            </div>
+            <button
+              onClick={() => setSyncToastMessage(null)}
+              className="text-emerald-700 hover:text-emerald-900 p-1 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -637,6 +687,8 @@ export default function App() {
             meanSdAuditHistory={appState.meanSdAuditHistory || []}
             currentUser={appState.currentUser}
             users={appState.users || []}
+            labInfo={appState.labInfo}
+            onSaveLabInfo={handleSaveLabInfo}
             onUpdateLot={handleUpdateLot}
             onDeleteLot={handleDeleteLot}
             onSaveAssay={handleSaveAssay}
@@ -766,6 +818,7 @@ export default function App() {
         lots={appState.lots}
         results={appState.results}
         currentUser={appState.currentUser}
+        labInfo={appState.labInfo}
       />
 
       <LoginModal
@@ -784,6 +837,13 @@ export default function App() {
       <UpdateCheckModal
         isOpen={isUpdateModalOpen}
         onClose={() => setIsUpdateModalOpen(false)}
+      />
+
+      <LabInfoModal
+        isOpen={isLabInfoModalOpen}
+        onClose={() => setIsLabInfoModalOpen(false)}
+        labInfo={appState.labInfo}
+        onSaveLabInfo={handleSaveLabInfo}
       />
     </div>
   );

@@ -59,6 +59,7 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
   const [singleLevel, setSingleLevel] = useState<QCLevel>('level1');
   const [singleValue, setSingleValue] = useState<string>('');
   const [singleError, setSingleError] = useState<string>('');
+  const [worksheetError, setWorksheetError] = useState<string>('');
 
   // Các xét nghiệm thuộc máy đang chọn
   const instrumentAssays = useMemo(() => {
@@ -145,9 +146,10 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
     });
 
     if (newResults.length === 0) {
-      alert('Vui lòng nhập ít nhất một giá trị nồng độ QC vào bảng!');
+      setWorksheetError('Vui lòng nhập ít nhất một giá trị nồng độ QC vào bảng!');
       return;
     }
+    setWorksheetError('');
 
     if (onAddResults) {
       onAddResults(newResults);
@@ -324,6 +326,22 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
                 Đã nhập: {enteredCount} giá trị
               </span>
             </div>
+
+            {worksheetError && (
+              <div className="mx-6 mt-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{worksheetError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setWorksheetError('')}
+                  className="text-rose-500 hover:text-rose-700 text-xs font-bold"
+                >
+                  Đóng
+                </button>
+              </div>
+            )}
 
             {/* Scrollable Worksheet Table */}
             <div className="flex-1 overflow-y-auto p-6 space-y-2">

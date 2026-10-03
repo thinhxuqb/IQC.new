@@ -258,30 +258,49 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
             <div className="space-y-4">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-3">
                 <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
-                <div>
+                <div className="space-y-1">
                   <h4 className="text-sm font-bold text-slate-900">
-                    Bạn đang sử dụng phiên bản mới nhất!
+                    Ứng dụng đang ở phiên bản {APP_CURRENT_VERSION}!
                   </h4>
-                  <p className="text-xs text-slate-600 mt-1">
-                    Phiên bản hiện tại <strong>{APP_CURRENT_VERSION}</strong> là bản phát hành ổn định và đạt chuẩn kiểm tra chất lượng cao nhất.
+                  <p className="text-xs text-slate-600">
+                    Hệ thống đã được tích hợp đầy đủ tính năng mới nhất theo chuẩn quản lý chất lượng ISO 15189:2022.
                   </p>
                 </div>
               </div>
 
-              {/* Direct Download .exe link for another Windows PC */}
+              {/* What's new in v1.1.2 */}
+              <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
+                  <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Điểm mới trong phiên bản {APP_CURRENT_VERSION}:</span>
+                </div>
+                <ul className="text-[11px] text-emerald-900 space-y-1 list-disc pl-4">
+                  <li>
+                    <strong>Sửa thông tin phòng xét nghiệm:</strong> Tùy chỉnh tên bệnh viện, phòng xét nghiệm, địa chỉ, hotline, email, website và mã cơ sở.
+                  </li>
+                  <li>
+                    <strong>Nhân sự phê duyệt ISO 15189:</strong> Cấu hình họ tên và chức danh Trưởng khoa, Phụ trách kỹ thuật & Quản lý chất lượng QC.
+                  </li>
+                  <li>
+                    <strong>Tự động đồng bộ báo cáo:</strong> Thông tin phòng xét nghiệm tự động xuất hiện trên tiêu đề và phần ký duyệt khi in ấn / xuất PDF.
+                  </li>
+                  <li>
+                    <strong>Hỗ trợ tự động cập nhật:</strong> Tương thích hoàn toàn với GitHub Actions Workflow để tự động build và tải bản .exe mới.
+                  </li>
+                </ul>
+              </div>
+
+              {/* Direct Download .exe link for Windows PC */}
               <div className="p-4 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
                     <Package className="w-4 h-4 text-indigo-600" />
-                    <span>Tải file cài đặt Windows (.exe) trực tiếp:</span>
+                    <span>Tải bộ cài đặt Windows ({APP_CURRENT_VERSION}) từ GitHub:</span>
                   </span>
                 </div>
-                <p className="text-xs text-slate-600">
-                  Chọn định dạng bạn muốn tải về máy tính Windows:
-                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   <a
-                    href={updateInfo?.exeDownloadUrl || `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC-by-ThinhXu-Setup-${APP_CURRENT_VERSION}.exe`}
+                    href={updateInfo?.exeDownloadUrl || `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC.by.ThinhXu.Setup.${APP_CURRENT_VERSION.replace(/^v/, '')}.exe`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors cursor-pointer text-center"
@@ -290,7 +309,7 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                     <span>Bộ Cài Setup (.exe)</span>
                   </a>
                   <a
-                    href={updateInfo?.portableDownloadUrl || `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC-by-ThinhXu-Portable-${APP_CURRENT_VERSION}.exe`}
+                    href={updateInfo?.portableDownloadUrl || `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC.by.ThinhXu.${APP_CURRENT_VERSION.replace(/^v/, '')}.exe`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white hover:bg-slate-50 text-indigo-900 border border-indigo-300 rounded-lg text-xs font-bold shadow-2xs transition-colors cursor-pointer text-center"
@@ -299,14 +318,23 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                     <span>Bản Portable (.exe)</span>
                   </a>
                 </div>
-                <div className="pt-1 text-center">
+                <div className="pt-1 flex items-center justify-between text-[11px] text-slate-500">
                   <a
                     href={`https://github.com/${GITHUB_REPO}/releases`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[11px] text-slate-500 hover:text-indigo-700 underline inline-flex items-center gap-1"
+                    className="hover:text-indigo-700 underline inline-flex items-center gap-1"
                   >
-                    <span>Xem toàn bộ danh sách phiên bản trên GitHub Releases</span>
+                    <span>Xem tất cả bản phát hành GitHub</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <a
+                    href={`https://github.com/${GITHUB_REPO}/releases/new?tag=${APP_CURRENT_VERSION}&title=${APP_CURRENT_VERSION}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-indigo-700 font-bold text-indigo-800 underline inline-flex items-center gap-1"
+                  >
+                    <span>Tạo Release {APP_CURRENT_VERSION} trên GitHub</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>

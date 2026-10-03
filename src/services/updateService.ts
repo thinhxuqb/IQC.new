@@ -10,12 +10,13 @@ export interface UpdateInfo {
   releaseUrl: string;
 }
 
-export const APP_CURRENT_VERSION = 'v1.1.1';
+export const APP_CURRENT_VERSION = 'v1.1.2';
 export const GITHUB_REPO = 'thinhxuqb/IQC.new';
 export const GITHUB_RELEASES_URL = `https://github.com/${GITHUB_REPO}/releases`;
 export const GITHUB_LATEST_RELEASE_URL = `https://github.com/${GITHUB_REPO}/releases/latest`;
-export const SETUP_EXE_FALLBACK_URL = `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC-by-ThinhXu-Setup-${APP_CURRENT_VERSION}.exe`;
-export const PORTABLE_EXE_FALLBACK_URL = `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC-by-ThinhXu-Portable-${APP_CURRENT_VERSION}.exe`;
+export const GITHUB_RELEASE_TAG_URL = (tag: string) => `https://github.com/${GITHUB_REPO}/releases/tag/${tag}`;
+export const SETUP_EXE_FALLBACK_URL = `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC.by.ThinhXu.Setup.${APP_CURRENT_VERSION.replace(/^v/, '')}.exe`;
+export const PORTABLE_EXE_FALLBACK_URL = `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC.by.ThinhXu.${APP_CURRENT_VERSION.replace(/^v/, '')}.exe`;
 
 /**
  * Tự động tải gói cập nhật và thực thi cài đặt ngầm không cần thao tác thủ công
@@ -116,20 +117,19 @@ export async function checkGitHubReleaseUpdate(): Promise<UpdateInfo> {
         const name = (asset.name || '').toLowerCase();
         if (name.includes('setup') && name.endsWith('.exe')) {
           exeDownloadUrl = asset.browser_download_url;
-        } else if (name.includes('portable') && name.endsWith('.exe')) {
+        } else if ((name.includes('portable') || !name.includes('setup')) && name.endsWith('.exe')) {
           portableDownloadUrl = asset.browser_download_url;
-        } else if (!exeDownloadUrl && name.endsWith('.exe')) {
-          exeDownloadUrl = asset.browser_download_url;
         }
       }
     }
 
     // Nếu không tìm thấy trong assets, dùng URL cấu trúc chuẩn của GitHub Releases
+    const versionPure = latestVersion.replace(/^v/i, '');
     if (!exeDownloadUrl) {
-      exeDownloadUrl = `https://github.com/${GITHUB_REPO}/releases/download/${latestVersion}/IQC-by-ThinhXu-Setup-${latestVersion}.exe`;
+      exeDownloadUrl = `https://github.com/${GITHUB_REPO}/releases/download/${latestVersion}/IQC.by.ThinhXu.Setup.${versionPure}.exe`;
     }
     if (!portableDownloadUrl) {
-      portableDownloadUrl = `https://github.com/${GITHUB_REPO}/releases/download/${latestVersion}/IQC-by-ThinhXu-Portable-${latestVersion}.exe`;
+      portableDownloadUrl = `https://github.com/${GITHUB_REPO}/releases/download/${latestVersion}/IQC.by.ThinhXu.${versionPure}.exe`;
     }
 
     // So sánh phiên bản

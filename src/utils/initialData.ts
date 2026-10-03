@@ -1,5 +1,24 @@
-import { Instrument, QCLevel, QCLot, QCMaterial, QCMapping, QCResult, TestAssay, UserProfile } from '../types/qc';
+import { Instrument, LabInfo, QCLevel, QCLot, QCMaterial, QCMapping, QCResult, TestAssay, UserProfile } from '../types/qc';
 import { calculateZScore, evaluateWestgard } from './westgard';
+
+export const DEFAULT_LAB_INFO: LabInfo = {
+  name: 'Khoa Xét Nghiệm Trung Tâm',
+  hospitalName: 'Bệnh Viện Đa Khoa Trung Tâm',
+  department: 'Khoa Hóa Sinh - Huyết Học - Miễn Dịch',
+  address: 'Số 120 Đường Y Học, Phường Tân Phú, Quận 7, TP. Hồ Chí Minh',
+  phone: '028.3899.6688 - 0912.345.678',
+  email: 'xetnghiem@benhvientrungtam.vn',
+  website: 'https://benhvientrungtam.vn/khoa-xet-nghiem',
+  labCode: 'LAB-ISO-15189-HCM',
+  headOfDepartment: 'TS. BS. Nguyễn Văn Hùng',
+  headTitle: 'Trưởng Khoa Xét Nghiệm',
+  technicalSupervisor: 'ThS. Lê Thị Thanh Mai',
+  supervisorTitle: 'Kỹ Thuật Viên Trưởng / Quản Lý Chất Lượng',
+  accreditationStandard: 'Tiêu Chuẩn Quốc Tế ISO 15189:2022',
+  documentCodePrefix: 'ISO15189-BM-QC',
+  slogan: 'Chính xác · Kịp thời · Chuẩn mực · Tận tâm vì sức khỏe người bệnh',
+  notes: 'Phòng xét nghiệm áp dụng nghiêm ngặt quy trình quản lý chất lượng theo tiêu chuẩn ISO 15189:2022.',
+};
 
 export const INITIAL_USERS: UserProfile[] = [
   {
@@ -22,6 +41,7 @@ export const INITIAL_USERS: UserProfile[] = [
       canManageUsers: true,
       canExportReports: true,
       canResetDatabase: true,
+      canEditLabInfo: true,
     },
   },
   {
@@ -44,6 +64,7 @@ export const INITIAL_USERS: UserProfile[] = [
       canManageUsers: true,
       canExportReports: true,
       canResetDatabase: false,
+      canEditLabInfo: true,
     },
   },
   {
