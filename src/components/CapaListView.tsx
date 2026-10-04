@@ -48,7 +48,7 @@ export const CapaListView: React.FC<CapaListViewProps> = ({
             <span>Sổ Nhật Ký Xử Lý Sự Cố QC & Khắc Phục (CAPA Register)</span>
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Quản lý các lần chạy vi phạm quy tắc Westgard và quy trình thẩm định ký duyệt theo chuẩn ISO 15189
+            Quản lý các lần chạy vi phạm quy tắc Westgard và quy trình thẩm định ký duyệt chất lượng
           </p>
         </div>
 
@@ -101,7 +101,7 @@ export const CapaListView: React.FC<CapaListViewProps> = ({
           <div className="text-center py-12 text-slate-500 text-xs">
             <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
             <p className="font-semibold text-slate-800">Không có sự cố vi phạm nào trong bộ lọc này!</p>
-            <p className="text-[11px] text-slate-400 mt-1">Tất cả các ca đo đều tuân thủ kiểm soát chất lượng ISO 15189.</p>
+            <p className="text-[11px] text-slate-400 mt-1">Tất cả các ca đo đều tuân thủ kiểm soát chất lượng nội kiểm.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

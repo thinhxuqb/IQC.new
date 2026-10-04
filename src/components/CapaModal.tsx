@@ -102,7 +102,7 @@ export const CapaModal: React.FC<CapaModalProps> = ({
                 Hồ Sơ Xử Lý Sự Cố QC & Hành Động Khắc Phục (CAPA)
               </h3>
               <p className="text-xs text-slate-500">
-                Quy trình chuẩn hóa ISO 15189 - Quản lý sự cố nội kiểm chất lượng
+                Quy trình chuẩn hóa - Quản lý sự cố nội kiểm chất lượng
               </p>
             </div>
           </div>

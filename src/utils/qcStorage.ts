@@ -21,7 +21,7 @@ export const INITIAL_MEAN_SD_AUDIT: MeanSdAuditRecord[] = [
     oldCV: 3.53,
     newCV: 3.24,
     reasonCategory: 'CUMULATIVE_MEAN_20',
-    reason: 'Tính toán lại Mean thực tế sau 20 ngày tích lũy đầu kỳ theo quy trình ISO 15189 (Mục 7.3.7)',
+    reason: 'Tính toán lại Mean thực tế sau 20 ngày tích lũy đầu kỳ theo quy trình quản lý chất lượng',
     approvedBy: 'TS. BS. Nguyễn Văn Hùng',
     notes: 'Phù hợp với hướng dẫn CLSI C24-A4. CV% thực tế 3.24% < TEa 10%.'
   },
@@ -99,12 +99,27 @@ export function loadAppState(): AppStateData {
     const instruments: Instrument[] = rawInstruments ? JSON.parse(rawInstruments) : INITIAL_INSTRUMENTS;
     const assays: TestAssay[] = rawAssays ? JSON.parse(rawAssays) : INITIAL_ASSAYS;
     const lots: QCLot[] = rawLots ? JSON.parse(rawLots) : INITIAL_LOTS;
-    const users: UserProfile[] = rawUsers ? JSON.parse(rawUsers) : INITIAL_USERS;
-    const currentUser: UserProfile = rawUser ? JSON.parse(rawUser) : users[0]; // Mặc định Trưởng khoa
+    const rawUsersList: UserProfile[] = rawUsers ? JSON.parse(rawUsers) : INITIAL_USERS;
+    const users: UserProfile[] = rawUsersList.map(u => ({
+      ...u,
+      roleTitle: (u.roleTitle || '').replace(/\s*ISO[\s-]*15189(:2022)?/gi, '').trim(),
+    }));
+    const parsedCurrentUser: UserProfile = rawUser ? JSON.parse(rawUser) : users[0];
+    const currentUser: UserProfile = {
+      ...parsedCurrentUser,
+      roleTitle: (parsedCurrentUser.roleTitle || '').replace(/\s*ISO[\s-]*15189(:2022)?/gi, '').trim(),
+    };
     const meanSdAuditHistory: MeanSdAuditRecord[] = rawAudit ? JSON.parse(rawAudit) : INITIAL_MEAN_SD_AUDIT;
     const materials: QCMaterial[] = rawMaterials ? JSON.parse(rawMaterials) : INITIAL_MATERIALS;
     const qcMappings: QCMapping[] = rawMappings ? JSON.parse(rawMappings) : INITIAL_MAPPINGS;
-    const labInfo: LabInfo = rawLabInfo ? JSON.parse(rawLabInfo) : DEFAULT_LAB_INFO;
+    const parsedLabInfo: LabInfo = rawLabInfo ? JSON.parse(rawLabInfo) : DEFAULT_LAB_INFO;
+    const labInfo: LabInfo = {
+      ...parsedLabInfo,
+      labCode: (parsedLabInfo.labCode || '').replace(/ISO-15189-/gi, 'QC-').replace(/ISO15189/gi, 'QC'),
+      accreditationStandard: (parsedLabInfo.accreditationStandard || '').replace(/ISO[\s-]*15189(:2022)?/gi, 'Quản Lý Chất Lượng Xét Nghiệm').trim(),
+      documentCodePrefix: (parsedLabInfo.documentCodePrefix || '').replace(/ISO[\s-]*15189-?/gi, ''),
+      notes: (parsedLabInfo.notes || '').replace(/\s*ISO[\s-]*15189(:2022)?/gi, ''),
+    };
 
     const logs: AuditLog[] = rawLogs ? JSON.parse(rawLogs) : [
       {
@@ -114,7 +129,7 @@ export function loadAppState(): AppStateData {
         userName: currentUser.name,
         role: currentUser.role,
         action: 'KHỞI_TẠO_HỆ_THỐNG',
-        details: 'Hệ thống quản lý nội kiểm QC xét nghiệm ISO 15189 khởi động thành công.',
+        details: 'Hệ thống quản lý nội kiểm QC xét nghiệm khởi động thành công.',
       }
     ];
 
@@ -276,9 +291,9 @@ export function saveLabInfo(labInfo: LabInfo) {
  */
 export function exportBackupData(state: AppStateData): string {
   const backupObject = {
-    appVersion: '2.5.0-ISO15189',
+    appVersion: '1.1.3',
     exportedAt: new Date().toISOString(),
-    laboratory: state.labInfo.name || 'Khoa Xét Nghiệm Y Khoa Chuẩn ISO 15189',
+    laboratory: state.labInfo.name || 'Khoa Xét Nghiệm Y Khoa',
     checksum: `QC-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
     data: {
       results: state.results,
@@ -358,7 +373,7 @@ export function resetDemoDatabase(): AppStateData {
     userName: INITIAL_USERS[0].name,
     role: INITIAL_USERS[0].role,
     action: 'KHÔI_PHỤC_DỮ_LIỆU_CHUẨN',
-    details: 'Đã nạp lại cơ sở dữ liệu mẫu chuẩn y khoa 30 ngày cho AU400, Sysmex 800 và Cobas e411 kèm thông tin phòng xét nghiệm chuẩn ISO 15189.',
+    details: 'Đã nạp lại cơ sở dữ liệu mẫu chuẩn y khoa 30 ngày cho AU400, Sysmex 800 và Cobas e411 kèm thông tin phòng xét nghiệm.',
   };
   localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify([resetLog]));
 

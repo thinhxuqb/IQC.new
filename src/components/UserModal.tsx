@@ -108,7 +108,7 @@ export const UserModal: React.FC<UserModalProps> = ({
       case 'director':
         return 'Trưởng khoa Xét nghiệm / Bác sĩ duyệt chuyên môn';
       case 'manager':
-        return 'Kỹ thuật viên trưởng / Quản lý chất lượng ISO 15189';
+        return 'Kỹ thuật viên trưởng / Quản lý chất lượng QC';
       case 'technician':
         return 'Kỹ thuật viên thực hiện xét nghiệm';
       case 'auditor':
@@ -168,7 +168,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                 {isEditing ? 'Chỉnh Sửa & Cấp Quyền Người Dùng' : 'Khai Báo Người Dùng Mới'}
               </h3>
               <p className="text-xs text-slate-300">
-                Phân quyền truy cập & bảo mật tài khoản chuẩn ISO 15189
+                Phân quyền truy cập & bảo mật tài khoản phòng xét nghiệm
               </p>
             </div>
           </div>

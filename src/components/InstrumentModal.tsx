@@ -108,7 +108,7 @@ export const InstrumentModal: React.FC<InstrumentModalProps> = ({
                 {isEditing ? 'Chỉnh Sửa Thiết Bị Xét Nghiệm' : 'Khai Báo Thiết Bị Mới'}
               </h3>
               <p className="text-xs text-slate-300">
-                Quản lý thông số máy phân tích y khoa ISO 15189
+                Quản lý thông số máy phân tích xét nghiệm y khoa
               </p>
             </div>
           </div>

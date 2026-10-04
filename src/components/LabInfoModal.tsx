@@ -57,10 +57,8 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
   };
 
   const handleResetToDefault = () => {
-    if (window.confirm('Bạn có chắc chắn muốn đặt lại thông tin phòng xét nghiệm về cấu hình chuẩn ISO 15189 ban đầu?')) {
-      setFormData({ ...DEFAULT_LAB_INFO });
-      setSavedSuccess(false);
-    }
+    setFormData({ ...DEFAULT_LAB_INFO });
+    setSavedSuccess(false);
   };
 
   return (
@@ -75,9 +73,6 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
             <div>
               <h3 className="text-base font-bold flex items-center gap-2">
                 <span>Cấu Hình Thông Tin Phòng Xét Nghiệm</span>
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-400/30">
-                  ISO 15189:2022
-                </span>
               </h3>
               <p className="text-xs text-slate-300">
                 Tùy chỉnh tên bệnh viện, phòng xét nghiệm, địa chỉ, hotline và nhân sự phê duyệt báo cáo
@@ -186,7 +181,7 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
                       required
                       value={formData.labCode}
                       onChange={(e) => handleChange('labCode', e.target.value)}
-                      placeholder="vd: LAB-ISO-15189-HCM"
+                      placeholder="vd: LAB-QC-HCM"
                       className="w-full text-xs font-mono px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold text-indigo-900"
                     />
                   </div>
@@ -270,7 +265,7 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
               <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200 space-y-4">
                 <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider border-b border-slate-200 pb-2">
                   <UserCheck className="w-4 h-4 text-sky-600" />
-                  <span>3. Nhân Sự Phụ Trách & Phê Duyệt Hồ Sơ ISO 15189</span>
+                  <span>3. Nhân Sự Phụ Trách & Phê Duyệt Hồ Sơ</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -323,7 +318,7 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
                       type="text"
                       value={formData.supervisorTitle}
                       onChange={(e) => handleChange('supervisorTitle', e.target.value)}
-                      placeholder="vd: Kỹ Thuật Viên Trưởng / Quản Lý Chất Lượng ISO 15189"
+                      placeholder="vd: Kỹ Thuật Viên Trưởng / Quản Lý Chất Lượng QC"
                       className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
                     />
                   </div>
@@ -346,7 +341,7 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
                       type="text"
                       value={formData.accreditationStandard}
                       onChange={(e) => handleChange('accreditationStandard', e.target.value)}
-                      placeholder="vd: Tiêu Chuẩn Quốc Tế ISO 15189:2022"
+                      placeholder="vd: Tiêu Chuẩn Quản Lý Chất Lượng Xét Nghiệm"
                       className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-semibold text-slate-900"
                     />
                   </div>
@@ -359,7 +354,7 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
                       type="text"
                       value={formData.documentCodePrefix}
                       onChange={(e) => handleChange('documentCodePrefix', e.target.value)}
-                      placeholder="vd: ISO15189-BM-QC"
+                      placeholder="vd: QC-BM-LAB"
                       className="w-full text-xs font-mono px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-bold"
                     />
                   </div>
@@ -385,7 +380,7 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
               <div className="p-4 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-950 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-sky-600 shrink-0" />
                 <span>
-                  Dưới đây là hình ảnh xem trước tiêu đề và phần ký duyệt sẽ xuất hiện trên <strong>Báo cáo tổng hợp nội kiểm QC ISO 15189</strong> khi in hoặc xuất PDF.
+                  Dưới đây là hình ảnh xem trước tiêu đề và phần ký duyệt sẽ xuất hiện trên <strong>Báo cáo tổng hợp nội kiểm QC</strong> khi in hoặc xuất PDF.
                 </span>
               </div>
 
@@ -460,7 +455,7 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
                     </div>
                     <div>
                       <p className="font-bold text-slate-900">{formData.technicalSupervisor}</p>
-                      <p className="text-[10px] text-slate-500 font-mono">QLCL-ISO15189</p>
+                      <p className="text-[10px] text-slate-500 font-mono">QLCL-QC</p>
                     </div>
                   </div>
 

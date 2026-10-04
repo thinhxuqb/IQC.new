@@ -138,9 +138,6 @@ export default function App() {
 
   // Thêm kết quả QC mới (từ máy LIS hoặc nhập tay)
   const handleAddNewResult = (newResult: QCResult) => {
-    const updatedResults = [...appState.results, newResult];
-    saveResults(updatedResults);
-
     const log: AuditLog = {
       id: `log_${Date.now()}`,
       timestamp: new Date().toISOString(),
@@ -153,11 +150,40 @@ export default function App() {
     };
     saveAuditLog(log);
 
-    setAppState((prev) => ({
-      ...prev,
-      results: updatedResults,
-      logs: [log, ...prev.logs],
-    }));
+    setAppState((prev) => {
+      const updatedResults = [...prev.results, newResult];
+      saveResults(updatedResults);
+
+      // Bảo đảm lô QC tồn tại trong danh mục lots nếu xét nghiệm mới chưa được gán lô
+      let updatedLots = prev.lots;
+      const hasLot = prev.lots.some((l) => l.assayId === newResult.assayId && l.level === newResult.level);
+      if (!hasLot) {
+        const fallbackLot: QCLot = {
+          id: newResult.lotId || `LOT_${newResult.assayId}_${newResult.level}`,
+          assayId: newResult.assayId,
+          instrumentId: newResult.instrumentId,
+          lotNumber: 'QC-STD',
+          level: newResult.level,
+          levelName: newResult.level === 'level1' ? 'Mức 1 (Level 1)' : newResult.level === 'level2' ? 'Mức 2 (Level 2)' : 'Mức 3 (Level 3)',
+          manufacturer: 'Chuẩn Nội Kiểm',
+          controlName: 'QC Control',
+          expDate: '2028-12-31',
+          targetMean: Number(newResult.value.toFixed(2)),
+          targetSD: 0.5,
+          targetCV: 5.0,
+          active: true,
+        };
+        updatedLots = [...prev.lots, fallbackLot];
+        saveLots(updatedLots);
+      }
+
+      return {
+        ...prev,
+        results: updatedResults,
+        lots: updatedLots,
+        logs: [log, ...prev.logs],
+      };
+    });
 
     // Kích hoạt chuông thông báo nếu có vi phạm Westgard
     if (newResult.status === 'REJECTED' || newResult.status === 'WARNING') {
@@ -174,8 +200,6 @@ export default function App() {
   // Thêm hàng loạt kết quả QC cùng lúc từ bảng Worksheet
   const handleAddNewResults = (newResults: QCResult[]) => {
     if (!newResults || newResults.length === 0) return;
-    const updatedResults = [...newResults, ...appState.results];
-    saveResults(updatedResults);
 
     const log: AuditLog = {
       id: `log_batch_${Date.now()}`,
@@ -189,11 +213,45 @@ export default function App() {
     };
     saveAuditLog(log);
 
-    setAppState((prev) => ({
-      ...prev,
-      results: updatedResults,
-      logs: [log, ...prev.logs],
-    }));
+    setAppState((prev) => {
+      const updatedResults = [...prev.results, ...newResults];
+      saveResults(updatedResults);
+
+      // Bảo đảm tất cả các lô QC được nhập đều có trong danh mục lots
+      let updatedLots = [...prev.lots];
+      let lotsChanged = false;
+      newResults.forEach((res) => {
+        const hasLot = updatedLots.some((l) => l.assayId === res.assayId && l.level === res.level);
+        if (!hasLot) {
+          lotsChanged = true;
+          updatedLots.push({
+            id: res.lotId || `LOT_${res.assayId}_${res.level}`,
+            assayId: res.assayId,
+            instrumentId: res.instrumentId,
+            lotNumber: 'QC-STD',
+            level: res.level,
+            levelName: res.level === 'level1' ? 'Mức 1 (Level 1)' : res.level === 'level2' ? 'Mức 2 (Level 2)' : 'Mức 3 (Level 3)',
+            manufacturer: 'Chuẩn Nội Kiểm',
+            controlName: 'QC Control',
+            expDate: '2028-12-31',
+            targetMean: Number(res.value.toFixed(2)),
+            targetSD: 0.5,
+            targetCV: 5.0,
+            active: true,
+          });
+        }
+      });
+      if (lotsChanged) {
+        saveLots(updatedLots);
+      }
+
+      return {
+        ...prev,
+        results: updatedResults,
+        lots: updatedLots,
+        logs: [log, ...prev.logs],
+      };
+    });
 
     // Bật cảnh báo nếu có vi phạm
     const firstViolation = newResults.find(r => r.status === 'REJECTED') || newResults.find(r => r.status === 'WARNING');
@@ -274,7 +332,7 @@ export default function App() {
     }, 400);
   };
 
-  // Cập nhật Lô QC (bao gồm sửa Mean/SD có lưu vết ISO 15189)
+  // Cập nhật Lô QC (bao gồm sửa Mean/SD có lưu vết)
   const handleUpdateLot = (updatedLot: QCLot, auditRecord?: MeanSdAuditRecord) => {
     let updatedLots: QCLot[];
     const exists = appState.lots.some((l) => l.id === updatedLot.id);
@@ -474,7 +532,7 @@ export default function App() {
     setAppState((prev) => ({ ...prev, qcMappings: updatedMappings }));
   };
 
-  // Cập nhật Thông Tin Phòng Xét Nghiệm ISO 15189
+  // Cập nhật Thông Tin Phòng Xét Nghiệm
   const handleSaveLabInfo = (info: LabInfo) => {
     saveLabInfo(info);
     const log: AuditLog = {
@@ -749,7 +807,7 @@ export default function App() {
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                Xuất Báo Cáo Nội Kiểm Định Kỳ ISO 15189 (PDF)
+                Xuất Báo Cáo Nội Kiểm Định Kỳ (PDF)
               </h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
                 Tạo báo cáo tháng tiêu chuẩn y khoa với đầy đủ chỉ số thống kê Mean, SD, CV%, SDI, Six Sigma, biểu đồ L-J và 3 chữ ký thẩm định.

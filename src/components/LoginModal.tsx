@@ -68,7 +68,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             Đăng Nhập Hệ Thống Nội Kiểm IQC
           </h2>
           <p className="text-xs text-slate-300 mt-1">
-            Quản lý chất lượng xét nghiệm y khoa chuẩn ISO 15189
+            Quản lý chất lượng nội kiểm xét nghiệm y khoa
           </p>
         </div>
 

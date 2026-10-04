@@ -17,7 +17,7 @@ export default defineConfig(() => {
           id: '/',
           name: 'IQC by ThinhXu',
           short_name: 'IQC ThinhXu',
-          description: 'Hệ thống Quản lý Nội kiểm Xét nghiệm Y khoa ISO 15189',
+          description: 'Hệ thống Quản lý Nội kiểm Xét nghiệm Y khoa',
           theme_color: '#0f172a',
           background_color: '#0f172a',
           display: 'standalone',

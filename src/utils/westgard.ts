@@ -1,6 +1,6 @@
 /**
  * Bộ máy phân tích quy tắc Westgard chuẩn quốc tế (Westgard Multirule Engine)
- * Đạt tiêu chuẩn ISO 15189 cho phòng xét nghiệm y khoa
+ * Đạt tiêu chuẩn kiểm soát chất lượng cho phòng xét nghiệm y khoa
  */
 
 import { QCLot, QCResult, WestgardViolation } from '../types/qc';

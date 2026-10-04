@@ -1,12 +1,12 @@
 /**
- * Định nghĩa kiểu dữ liệu cho Hệ Thống Quản Lý Nội Kiểm Xét Nghiệm QC (ISO 15189)
+ * Định nghĩa kiểu dữ liệu cho Hệ Thống Quản Lý Nội Kiểm Xét Nghiệm QC
  */
 
 export type UserRole = 'director' | 'manager' | 'technician' | 'auditor';
 
 export interface UserPermissions {
   canInputQC: boolean;           // Quyền nhập kết quả QC thủ công & nhận LIS
-  canEditMeanSD: boolean;        // Quyền sửa Mean & SD có lưu vết ISO 15189
+  canEditMeanSD: boolean;        // Quyền sửa Mean & SD có lưu vết
   canApproveCapa: boolean;       // Quyền phê duyệt CAPA
   canManageConfig: boolean;      // Quyền cấu hình máy, xét nghiệm, vật liệu QC
   canManageUsers: boolean;       // Quyền khai báo người dùng & cấp quyền
@@ -23,13 +23,13 @@ export interface LabInfo {
   phone: string;                  // Số điện thoại / Hotline
   email: string;                  // Email liên hệ
   website: string;                // Website tra cứu
-  labCode: string;                // Mã cơ sở / Mã phòng xét nghiệm ISO
+  labCode: string;                // Mã cơ sở / Mã phòng xét nghiệm
   headOfDepartment: string;       // Họ tên Trưởng khoa xét nghiệm
   headTitle: string;              // Chức danh / Học hàm học vị Trưởng khoa
   technicalSupervisor: string;     // Phụ trách kỹ thuật / Quản lý chất lượng QC
   supervisorTitle: string;        // Chức danh phụ trách chất lượng
-  accreditationStandard: string;  // Tiêu chuẩn áp dụng (vd: ISO 15189:2022)
-  documentCodePrefix: string;     // Tiền tố mã biểu mẫu QC (vd: ISO15189-BM-QC)
+  accreditationStandard: string;  // Tiêu chuẩn áp dụng
+  documentCodePrefix: string;     // Tiền tố mã biểu mẫu QC (vd: BM-QC)
   slogan?: string;                // Khẩu hiệu / Tiêu chí chất lượng
   notes?: string;                 // Ghi chú thêm
 }

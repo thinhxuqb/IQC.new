@@ -99,7 +99,7 @@ export const AssayModal: React.FC<AssayModalProps> = ({
                 {isEditing ? 'Chỉnh Sửa Thông Tin Xét Nghiệm' : 'Khai Báo Xét Nghiệm Mới'}
               </h3>
               <p className="text-xs text-slate-300">
-                Thông số kỹ thuật & Giới hạn sai số TEa% chuẩn ISO 15189
+                Thông số kỹ thuật & Giới hạn sai số TEa% xét nghiệm
               </p>
             </div>
           </div>

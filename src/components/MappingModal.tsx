@@ -35,12 +35,22 @@ export const MappingModal: React.FC<MappingModalProps> = ({
   // Lấy thông tin vật liệu đang chọn
   const currentMaterial = materials.find(m => m.id === selectedMaterialId);
 
+  const [levelInputStrings, setLevelInputStrings] = useState<Record<number, { mean: string; sd: string }>>({});
+
   useEffect(() => {
     if (mapping) {
       setSelectedInstId(mapping.instrumentId);
       setSelectedAssayId(mapping.assayId);
       setSelectedMaterialId(mapping.materialId);
       setLevelConfigs(mapping.levelConfigs);
+      const initStrs: Record<number, { mean: string; sd: string }> = {};
+      mapping.levelConfigs.forEach((lvl, idx) => {
+        initStrs[idx] = {
+          mean: lvl.targetMean ? Number(lvl.targetMean).toFixed(2) : '',
+          sd: lvl.targetSD ? Number(lvl.targetSD).toFixed(2) : '',
+        };
+      });
+      setLevelInputStrings(initStrs);
       setNotes(mapping.notes || '');
       setActive(mapping.active ?? true);
     } else {
@@ -52,6 +62,7 @@ export const MappingModal: React.FC<MappingModalProps> = ({
       setSelectedMaterialId(firstMat?.id || '');
       setNotes('');
       setActive(true);
+      setLevelInputStrings({});
 
       // Tự động khởi tạo cấu hình các mức theo vật liệu đầu tiên
       if (firstMat) {
@@ -92,7 +103,16 @@ export const MappingModal: React.FC<MappingModalProps> = ({
     setLevelConfigs(configs);
   };
 
-  const handleLevelValueChange = (index: number, field: 'targetMean' | 'targetSD', val: number) => {
+  const handleLevelValueChange = (index: number, field: 'targetMean' | 'targetSD', rawStr: string) => {
+    setLevelInputStrings(prev => ({
+      ...prev,
+      [index]: {
+        mean: field === 'targetMean' ? rawStr : (prev[index]?.mean ?? (levelConfigs[index]?.targetMean ? String(levelConfigs[index].targetMean) : '')),
+        sd: field === 'targetSD' ? rawStr : (prev[index]?.sd ?? (levelConfigs[index]?.targetSD ? String(levelConfigs[index].targetSD) : '')),
+      },
+    }));
+
+    const val = parseFloat(rawStr) || 0;
     const updated = [...levelConfigs];
     const item = { ...updated[index], [field]: val };
     
@@ -130,7 +150,14 @@ export const MappingModal: React.FC<MappingModalProps> = ({
       return;
     }
 
-    const hasInvalid = levelConfigs.some(c => c.active && (c.targetMean <= 0 || c.targetSD <= 0));
+    const normalizedConfigs = levelConfigs.map(c => ({
+      ...c,
+      targetMean: Number((c.targetMean || 0).toFixed(2)),
+      targetSD: Number((c.targetSD || 0).toFixed(2)),
+      targetCV: c.targetMean > 0 && c.targetSD > 0 ? Number(((c.targetSD / c.targetMean) * 100).toFixed(2)) : 0,
+    }));
+
+    const hasInvalid = normalizedConfigs.some(c => c.active && (c.targetMean <= 0 || c.targetSD <= 0));
     if (hasInvalid) {
       setError('Mean mục tiêu và SD mục tiêu của các mức đang kích hoạt phải lớn hơn 0.');
       return;
@@ -141,7 +168,7 @@ export const MappingModal: React.FC<MappingModalProps> = ({
       instrumentId: selectedInstId,
       assayId: selectedAssayId,
       materialId: selectedMaterialId,
-      levelConfigs,
+      levelConfigs: normalizedConfigs,
       active,
       notes: notes.trim(),
       updatedAt: new Date().toISOString(),
@@ -313,10 +340,10 @@ export const MappingModal: React.FC<MappingModalProps> = ({
                       </label>
                       <input
                         type="number"
-                        step="any"
+                        step="0.01"
                         disabled={!lvl.active}
-                        value={lvl.targetMean || ''}
-                        onChange={e => handleLevelValueChange(index, 'targetMean', parseFloat(e.target.value) || 0)}
+                        value={levelInputStrings[index]?.mean !== undefined ? levelInputStrings[index].mean : (lvl.targetMean || '')}
+                        onChange={e => handleLevelValueChange(index, 'targetMean', e.target.value)}
                         placeholder="VD: 5.35"
                         className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded bg-white font-mono font-bold outline-none focus:ring-1 focus:ring-indigo-500"
                       />
@@ -328,10 +355,10 @@ export const MappingModal: React.FC<MappingModalProps> = ({
                       </label>
                       <input
                         type="number"
-                        step="any"
+                        step="0.01"
                         disabled={!lvl.active}
-                        value={lvl.targetSD || ''}
-                        onChange={e => handleLevelValueChange(index, 'targetSD', parseFloat(e.target.value) || 0)}
+                        value={levelInputStrings[index]?.sd !== undefined ? levelInputStrings[index].sd : (lvl.targetSD || '')}
+                        onChange={e => handleLevelValueChange(index, 'targetSD', e.target.value)}
                         placeholder="VD: 0.16"
                         className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded bg-white font-mono font-bold outline-none focus:ring-1 focus:ring-indigo-500"
                       />
@@ -342,7 +369,7 @@ export const MappingModal: React.FC<MappingModalProps> = ({
                         Hệ Số CV% (Tự tính)
                       </label>
                       <div className="w-full text-xs px-2.5 py-1.5 bg-slate-100 border border-slate-200 rounded font-mono font-bold text-indigo-900">
-                        {lvl.targetCV ? `${lvl.targetCV}%` : '0.00%'}
+                        {lvl.targetCV ? `${Number(lvl.targetCV).toFixed(2)}%` : '0.00%'}
                       </div>
                     </div>
                   </div>
@@ -353,7 +380,7 @@ export const MappingModal: React.FC<MappingModalProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Ghi Chú Map / Nguồn Thẩm Định (ISO 15189)
+              Ghi Chú Map / Nguồn Thẩm Định
             </label>
             <textarea
               rows={2}

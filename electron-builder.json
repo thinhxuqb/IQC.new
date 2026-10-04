@@ -24,8 +24,9 @@
     "icon": "public/pwa-512x512.png"
   },
   "nsis": {
-    "oneClick": false,
-    "allowToChangeInstallationDirectory": true,
+    "oneClick": true,
+    "perMachine": false,
+    "runAfterFinish": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
     "shortcutName": "IQC by ThinhXu",

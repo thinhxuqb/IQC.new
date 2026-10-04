@@ -20,6 +20,8 @@ interface LeveyJenningsChartProps {
   onSelectResultForCapa?: (result: QCResult) => void;
   compact?: boolean;
   onZoomIn?: () => void;
+  globalDateRange?: { from: string; to: string };
+  hideIndividualTimeFilter?: boolean;
 }
 
 export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
@@ -29,11 +31,13 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
   onSelectResultForCapa,
   compact = false,
   onZoomIn,
+  globalDateRange,
+  hideIndividualTimeFilter = false,
 }) => {
   // Chế độ hiển thị: 'combined' (gộp chung 1 trục) hoặc 'separated' (tách riêng từng trục)
   const [viewMode, setViewMode] = useState<'combined' | 'separated'>('combined');
   
-  // Quản lý khoảng thời gian xem biểu đồ
+  // Quản lý khoảng thời gian xem biểu đồ (dùng khi không có globalDateRange)
   const [timePreset, setTimePreset] = useState<'7d' | '15d' | '30d' | 'month' | 'last_month' | 'all' | 'custom'>('30d');
   const [customStartDate, setCustomStartDate] = useState<string>(() => {
     const d = new Date();
@@ -58,8 +62,12 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
     y: number;
   } | null>(null);
 
-  // Tính toán khoảng ngày bắt đầu & kết thúc dựa trên preset
+  // Tính toán khoảng ngày bắt đầu & kết thúc dựa trên preset hoặc globalDateRange
   const activeDateRange = useMemo(() => {
+    if (globalDateRange) {
+      return globalDateRange;
+    }
+
     const now = new Date();
     const todayStr = now.toISOString().slice(0, 10);
 
@@ -96,7 +104,7 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
       return { from: customStartDate, to: customEndDate };
     }
     return { from: '', to: '' }; // 'all'
-  }, [timePreset, customStartDate, customEndDate]);
+  }, [globalDateRange, timePreset, customStartDate, customEndDate]);
 
   // Lọc kết quả của xét nghiệm theo khoảng thời gian đã chọn
   const assayResults = useMemo(() => {
@@ -869,82 +877,84 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
             </button>
           </div>
 
-          {/* Time Range Selector */}
-          <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 rounded-lg text-xs">
-            <div className="flex items-center gap-1 px-1.5 py-0.5 text-slate-500 font-semibold">
-              <Calendar className="w-3.5 h-3.5 text-slate-700" />
-              <span className="hidden sm:inline">Khoảng thời gian:</span>
-            </div>
+          {/* Time Range Selector (chỉ hiện khi không có bộ chọn thời gian chung) */}
+          {!hideIndividualTimeFilter && !globalDateRange && (
+            <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 rounded-lg text-xs">
+              <div className="flex items-center gap-1 px-1.5 py-0.5 text-slate-500 font-semibold">
+                <Calendar className="w-3.5 h-3.5 text-slate-700" />
+                <span className="hidden sm:inline">Khoảng thời gian:</span>
+              </div>
 
-            <button
-              type="button"
-              onClick={() => setTimePreset('7d')}
-              className={`px-2 py-1 rounded-md transition-colors font-medium ${
-                timePreset === '7d' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              7 ngày
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimePreset('15d')}
-              className={`px-2 py-1 rounded-md transition-colors font-medium ${
-                timePreset === '15d' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              15 ngày
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimePreset('30d')}
-              className={`px-2 py-1 rounded-md transition-colors font-medium ${
-                timePreset === '30d' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              30 ngày
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimePreset('month')}
-              className={`px-2 py-1 rounded-md transition-colors font-medium ${
-                timePreset === 'month' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Tháng này
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimePreset('last_month')}
-              className={`px-2 py-1 rounded-md transition-colors font-medium ${
-                timePreset === 'last_month' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Tháng trước
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimePreset('all')}
-              className={`px-2 py-1 rounded-md transition-colors font-medium ${
-                timePreset === 'all' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Tất cả
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimePreset('custom')}
-              className={`px-2 py-1 rounded-md transition-colors font-medium ${
-                timePreset === 'custom' ? 'bg-white text-cyan-800 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Tùy chọn ngày
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => setTimePreset('7d')}
+                className={`px-2 py-1 rounded-md transition-colors font-medium cursor-pointer ${
+                  timePreset === '7d' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                7 ngày
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimePreset('15d')}
+                className={`px-2 py-1 rounded-md transition-colors font-medium cursor-pointer ${
+                  timePreset === '15d' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                15 ngày
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimePreset('30d')}
+                className={`px-2 py-1 rounded-md transition-colors font-medium cursor-pointer ${
+                  timePreset === '30d' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                30 ngày
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimePreset('month')}
+                className={`px-2 py-1 rounded-md transition-colors font-medium cursor-pointer ${
+                  timePreset === 'month' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Tháng này
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimePreset('last_month')}
+                className={`px-2 py-1 rounded-md transition-colors font-medium cursor-pointer ${
+                  timePreset === 'last_month' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Tháng trước
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimePreset('all')}
+                className={`px-2 py-1 rounded-md transition-colors font-medium cursor-pointer ${
+                  timePreset === 'all' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Tất cả
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimePreset('custom')}
+                className={`px-2 py-1 rounded-md transition-colors font-medium cursor-pointer ${
+                  timePreset === 'custom' ? 'bg-white text-cyan-800 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Tùy chọn ngày
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Date Range Custom Input Bar (when custom is selected) */}
-      {timePreset === 'custom' && (
+      {/* Date Range Custom Input Bar (when custom is selected and individual time filter is active) */}
+      {!hideIndividualTimeFilter && !globalDateRange && timePreset === 'custom' && (
         <div className="bg-cyan-50/70 border border-cyan-200/80 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-cyan-700" />

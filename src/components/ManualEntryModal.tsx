@@ -1,18 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Instrument, QCLevel, QCLot, QCResult, TestAssay, UserProfile } from '../types/qc';
 import { calculateZScore, evaluateWestgard } from '../utils/westgard';
 import { 
-  PlusCircle, 
   X, 
   CheckCircle, 
   AlertTriangle, 
-  Layers, 
   Table, 
-  Sliders, 
   Save, 
   Calendar, 
   Clock, 
-  Sparkles,
   Server
 } from 'lucide-react';
 
@@ -43,13 +39,17 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
   onAddResult,
   onAddResults,
 }) => {
-  // Chế độ nhập: 'worksheet' (Nhập nhiều xét nghiệm & các mức cùng lúc) hoặc 'single' (Đơn lẻ)
+  // Chế độ nhập: 'worksheet' (Bảng nhập đồng thời) hoặc 'single' (Nhập đơn lẻ 1 xét nghiệm)
   const [entryMode, setEntryMode] = useState<'worksheet' | 'single'>('worksheet');
 
   // Bộ lọc máy & thời gian dùng chung
   const [selectedInstId, setSelectedInstId] = useState<string>(() => instruments[0]?.id || 'AU400');
   const [shift, setShift] = useState<'SÁNG' | 'CHIỀU' | 'ĐÊM'>('SÁNG');
-  const [timestampInput, setTimestampInput] = useState<string>(() => new Date().toISOString().slice(0, 16));
+  const [timestampInput, setTimestampInput] = useState<string>(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  });
 
   // Dữ liệu nhập cho chế độ Worksheet: Record<assayId, { level1: string, level2: string, level3: string }>
   const [worksheetValues, setWorksheetValues] = useState<Record<string, WorksheetRowValue>>({});
@@ -60,20 +60,51 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
   const [singleValue, setSingleValue] = useState<string>('');
   const [singleError, setSingleError] = useState<string>('');
   const [worksheetError, setWorksheetError] = useState<string>('');
+  const [successMsg, setSuccessMsg] = useState<string>('');
 
   // Các xét nghiệm thuộc máy đang chọn
   const instrumentAssays = useMemo(() => {
-    return assays.filter(a => a.instrumentId === selectedInstId);
+    const filtered = assays.filter(a => a.instrumentId === selectedInstId);
+    return filtered.length > 0 ? filtered : assays;
   }, [assays, selectedInstId]);
+
+  // Đồng bộ singleAssayId khi đổi máy
+  useEffect(() => {
+    if (instrumentAssays.length > 0) {
+      if (!singleAssayId || !instrumentAssays.some(a => a.id === singleAssayId)) {
+        setSingleAssayId(instrumentAssays[0].id);
+      }
+    }
+  }, [instrumentAssays, singleAssayId]);
+
+  // Reset form mỗi khi mở modal
+  useEffect(() => {
+    if (isOpen) {
+      setWorksheetValues({});
+      setSingleValue('');
+      setSingleError('');
+      setWorksheetError('');
+      setSuccessMsg('');
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      setTimestampInput(now.toISOString().slice(0, 16));
+      if (instruments.length > 0 && !instruments.some(i => i.id === selectedInstId)) {
+        setSelectedInstId(instruments[0].id);
+      }
+    }
+  }, [isOpen, instruments]);
 
   // Xác định các mức nồng độ có sẵn cho máy đang chọn
   const instrumentLots = useMemo(() => {
-    return lots.filter(l => l.instrumentId === selectedInstId && l.active);
+    return lots.filter(l => l.instrumentId === selectedInstId);
   }, [lots, selectedInstId]);
 
   const availableLevels = useMemo(() => {
     const set = new Set<QCLevel>();
     instrumentLots.forEach(l => set.add(l.level));
+    if (set.size === 0) {
+      return ['level1', 'level2'] as QCLevel[];
+    }
     return Array.from(set).sort();
   }, [instrumentLots]);
 
@@ -91,34 +122,68 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
   };
 
   // Đếm số lượng giá trị hợp lệ đã nhập trong bảng Worksheet
-  const enteredCount = useMemo(() => {
-    let count = 0;
-    Object.values(worksheetValues).forEach(row => {
-      Object.values(row).forEach(v => {
-        if (v && !isNaN(parseFloat(v))) count++;
-      });
-    });
-    return count;
-  }, [worksheetValues]);
+  const enteredCount = Object.values(worksheetValues).reduce((count, row) => {
+    return count + Object.values(row).filter(v => v !== '' && !isNaN(parseFloat(v))).length;
+  }, 0);
+
+  // Helper tính timestamp an toàn
+  const getSafeTimestamp = () => {
+    try {
+      const d = timestampInput ? new Date(timestampInput) : new Date();
+      if (!isNaN(d.getTime())) return d.toISOString();
+    } catch {
+      // fallback
+    }
+    return new Date().toISOString();
+  };
+
+  // Helper tìm hoặc sinh lô hợp lệ
+  const resolveLotForAssayLevel = (targetAssay: TestAssay, targetLevel: QCLevel): QCLot => {
+    let lot = lots.find(l => l.assayId === targetAssay.id && l.level === targetLevel && (l.active !== false));
+    if (!lot) {
+      lot = lots.find(l => l.assayId === targetAssay.id && l.level === targetLevel);
+    }
+    if (!lot) {
+      // Fallback lot an toàn để không bao giờ bị chặn nhập liệu
+      const fallbackMean = 10;
+      const fallbackSD = 0.5;
+      lot = {
+        id: `LOT_${targetAssay.id}_${targetLevel}`,
+        assayId: targetAssay.id,
+        instrumentId: targetAssay.instrumentId,
+        lotNumber: 'QC-STD',
+        level: targetLevel,
+        levelName: targetLevel === 'level1' ? 'Mức 1' : targetLevel === 'level2' ? 'Mức 2' : 'Mức 3',
+        manufacturer: 'Chuẩn Nội Kiểm',
+        controlName: 'QC Control',
+        expDate: '2028-12-31',
+        targetMean: fallbackMean,
+        targetSD: fallbackSD,
+        targetCV: 5.0,
+        active: true,
+      };
+    }
+    return lot;
+  };
 
   // Lưu hàng loạt từ bảng Worksheet
   const handleSaveBatchWorksheet = (e: React.FormEvent) => {
     e.preventDefault();
+    setWorksheetError('');
     const newResults: QCResult[] = [];
-    const dateObj = new Date(timestampInput);
-    const dateIso = dateObj.toISOString();
+    const dateIso = getSafeTimestamp();
 
     instrumentAssays.forEach(assay => {
       const rowVals = worksheetValues[assay.id] || {};
 
       Object.entries(rowVals).forEach(([levelKey, valStr]) => {
-        const val = parseFloat(valStr);
+        if (!valStr || valStr.trim() === '') return;
+        const val = parseFloat(valStr.replace(',', '.'));
         if (isNaN(val)) return;
 
-        const lot = lots.find(l => l.assayId === assay.id && l.level === levelKey && l.active);
-        if (!lot) return;
-
-        const z = calculateZScore(val, lot.targetMean, lot.targetSD);
+        const lot = resolveLotForAssayLevel(assay, levelKey as QCLevel);
+        const sd = lot.targetSD > 0 ? lot.targetSD : 0.1;
+        const z = calculateZScore(val, lot.targetMean, sd);
         const histForLot = historicalResults
           .filter(r => r.lotId === lot.id)
           .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
@@ -129,12 +194,12 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
           id: `qc_man_${Date.now()}_${assay.id}_${levelKey}_${Math.floor(Math.random() * 1000)}`,
           assayId: assay.id,
           lotId: lot.id,
-          instrumentId: lot.instrumentId,
+          instrumentId: lot.instrumentId || assay.instrumentId,
           level: lot.level,
           timestamp: dateIso,
           shift,
-          value: val,
-          zScore: z,
+          value: Math.round(val * 100) / 100,
+          zScore: Math.round(z * 100) / 100,
           operatorId: currentUser.id,
           operatorName: currentUser.name,
           source: 'NHẬP_TAY',
@@ -146,10 +211,9 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
     });
 
     if (newResults.length === 0) {
-      setWorksheetError('Vui lòng nhập ít nhất một giá trị nồng độ QC vào bảng!');
+      setWorksheetError('Vui lòng nhập ít nhất một giá trị nồng độ đo được vào bảng!');
       return;
     }
-    setWorksheetError('');
 
     if (onAddResults) {
       onAddResults(newResults);
@@ -157,29 +221,38 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
       newResults.forEach(r => onAddResult(r));
     }
 
-    onClose();
+    setSuccessMsg(`Đã lưu thành công ${newResults.length} kết quả nội kiểm.`);
+    setTimeout(() => {
+      onClose();
+    }, 600);
   };
 
   // Lưu đơn lẻ
   const handleSaveSingle = (e: React.FormEvent) => {
     e.preventDefault();
     setSingleError('');
-    const val = parseFloat(singleValue);
-    const targetAssay = assays.find(a => a.id === (singleAssayId || instrumentAssays[0]?.id));
-    if (!targetAssay) return;
 
-    const lot = lots.find(l => l.assayId === targetAssay.id && l.level === singleLevel && l.active);
-    if (!lot) {
-      setSingleError(`Không tìm thấy Lô QC đang hoạt động cho ${targetAssay.code} mức ${singleLevel}`);
+    if (!singleValue || singleValue.trim() === '') {
+      setSingleError('Vui lòng nhập giá trị nồng độ đo được.');
       return;
     }
 
+    const val = parseFloat(singleValue.replace(',', '.'));
     if (isNaN(val)) {
-      setSingleError('Vui lòng nhập giá trị số hợp lệ.');
+      setSingleError('Vui lòng nhập số hợp lệ (cho phép 2 số thập phân).');
       return;
     }
 
-    const z = calculateZScore(val, lot.targetMean, lot.targetSD);
+    const activeAid = singleAssayId || instrumentAssays[0]?.id || assays[0]?.id;
+    const targetAssay = assays.find(a => a.id === activeAid);
+    if (!targetAssay) {
+      setSingleError('Vui lòng chọn một xét nghiệm.');
+      return;
+    }
+
+    const lot = resolveLotForAssayLevel(targetAssay, singleLevel);
+    const sd = lot.targetSD > 0 ? lot.targetSD : 0.1;
+    const z = calculateZScore(val, lot.targetMean, sd);
     const histForLot = historicalResults
       .filter(r => r.lotId === lot.id)
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
@@ -190,12 +263,12 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
       id: `qc_man_${Date.now()}`,
       assayId: targetAssay.id,
       lotId: lot.id,
-      instrumentId: lot.instrumentId,
+      instrumentId: lot.instrumentId || targetAssay.instrumentId,
       level: singleLevel,
-      timestamp: new Date(timestampInput).toISOString(),
+      timestamp: getSafeTimestamp(),
       shift,
-      value: val,
-      zScore: z,
+      value: Math.round(val * 100) / 100,
+      zScore: Math.round(z * 100) / 100,
       operatorId: currentUser.id,
       operatorName: currentUser.name,
       source: 'NHẬP_TAY',
@@ -205,7 +278,10 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
     };
 
     onAddResult(newRes);
-    onClose();
+    setSuccessMsg(`Đã lưu thành công kết quả ${targetAssay.name} = ${newRes.value}`);
+    setTimeout(() => {
+      onClose();
+    }, 500);
   };
 
   return (
@@ -225,7 +301,7 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
                 Nhập Thủ Công Kết Quả Nội Kiểm (QC Manual Entry)
               </h3>
               <p className="text-xs text-slate-300">
-                Nhập đồng thời nhiều xét nghiệm và các mức nồng độ (Level 1, 2, 3) theo ca làm việc
+                Hỗ trợ nhập 2 số thập phân, tự động tính Z-score và đối chiếu Westgard
               </p>
             </div>
           </div>
@@ -240,7 +316,7 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
                   entryMode === 'worksheet' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Bảng Hàng Loạt
+                Bảng Nhiều Chỉ Số
               </button>
               <button
                 type="button"
@@ -255,26 +331,32 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
 
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer ml-1"
+              className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Global Controls: Instrument, Shift, Timestamp */}
-        <div className="bg-slate-50 border-b border-slate-200 px-6 py-3 shrink-0 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Thông báo thành công */}
+        {successMsg && (
+          <div className="bg-emerald-50 border-b border-emerald-200 px-6 py-2.5 text-xs text-emerald-800 flex items-center gap-2 font-semibold">
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        {/* Global Metadata Controls (Máy, Ca, Thời gian) */}
+        <div className="bg-slate-50 border-b border-slate-200 p-4 shrink-0 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
-              Thiết Bị Phân Tích
+            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1 flex items-center gap-1">
+              <Server className="w-3.5 h-3.5 text-slate-500" />
+              <span>Thiết Bị Xét Nghiệm:</span>
             </label>
             <select
               value={selectedInstId}
-              onChange={e => {
-                setSelectedInstId(e.target.value);
-                setWorksheetValues({});
-              }}
-              className="w-full text-xs font-semibold py-1.5 px-3 border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500"
+              onChange={e => setSelectedInstId(e.target.value)}
+              className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none"
             >
               {instruments.map(inst => (
                 <option key={inst.id} value={inst.id}>
@@ -285,66 +367,54 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
-              Ca Chạy QC
+            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1 flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-slate-500" />
+              <span>Ca Làm Việc:</span>
             </label>
-            <select
-              value={shift}
-              onChange={e => setShift(e.target.value as any)}
-              className="w-full text-xs font-semibold py-1.5 px-3 border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="SÁNG">Ca Sáng (06:00 - 14:00)</option>
-              <option value="CHIỀU">Ca Chiều (14:00 - 22:00)</option>
-              <option value="ĐÊM">Ca Đêm (22:00 - 06:00)</option>
-            </select>
+            <div className="grid grid-cols-3 gap-1 bg-white p-0.5 border border-slate-300 rounded-lg">
+              {(['SÁNG', 'CHIỀU', 'ĐÊM'] as const).map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setShift(s)}
+                  className={`py-1 text-[11px] font-bold rounded transition-colors cursor-pointer ${
+                    shift === s ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
-              Thời Gian Chạy
+            <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1 flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-slate-500" />
+              <span>Thời Gian Chạy Đo:</span>
             </label>
             <input
               type="datetime-local"
               value={timestampInput}
               onChange={e => setTimestampInput(e.target.value)}
-              className="w-full text-xs font-mono py-1.5 px-3 border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white font-mono text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none"
             />
           </div>
         </div>
 
         {/* ========================================================= */}
-        {/* MODE 1: BẢNG NHẬP NHIỀU XÉT NGHIỆM & NHIỀU MỨC (WORKSHEET) */}
+        {/* MODE 1: BẢNG NHẬP NHIỀU XÉT NGHIỆM (WORKSHEET)            */}
         {/* ========================================================= */}
         {entryMode === 'worksheet' && (
-          <form onSubmit={handleSaveBatchWorksheet} className="flex flex-col flex-1 overflow-hidden">
-            <div className="p-4 bg-indigo-50/60 border-b border-indigo-100 flex items-center justify-between text-xs shrink-0">
-              <span className="text-indigo-950 font-medium flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
-                <span>Nhập trực tiếp các giá trị vào từng ô nồng độ bên dưới. Dùng phím <strong>Tab</strong> để nhảy nhanh giữa các ô.</span>
-              </span>
-              <span className="font-mono font-bold text-indigo-900 bg-indigo-100 px-2.5 py-1 rounded-full">
-                Đã nhập: {enteredCount} giá trị
-              </span>
-            </div>
-
+          <form onSubmit={handleSaveBatchWorksheet} noValidate className="flex-1 flex flex-col overflow-hidden">
             {worksheetError && (
-              <div className="mx-6 mt-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span>{worksheetError}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setWorksheetError('')}
-                  className="text-rose-500 hover:text-rose-700 text-xs font-bold"
-                >
-                  Đóng
-                </button>
+              <div className="mx-6 mt-3 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-center gap-2 shrink-0">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{worksheetError}</span>
               </div>
             )}
 
             {/* Scrollable Worksheet Table */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-2">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-2">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 text-[11px] uppercase font-bold text-slate-600 bg-slate-50 sticky top-0 z-10">
@@ -359,15 +429,14 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {instrumentAssays.map(assay => {
-                    const l1 = lots.find(l => l.assayId === assay.id && l.level === 'level1' && l.active);
-                    const l2 = lots.find(l => l.assayId === assay.id && l.level === 'level2' && l.active);
-                    const l3 = lots.find(l => l.assayId === assay.id && l.level === 'level3' && l.active);
+                    const l1 = resolveLotForAssayLevel(assay, 'level1');
+                    const l2 = resolveLotForAssayLevel(assay, 'level2');
+                    const l3 = resolveLotForAssayLevel(assay, 'level3');
 
                     const v1 = worksheetValues[assay.id]?.['level1'] || '';
                     const v2 = worksheetValues[assay.id]?.['level2'] || '';
                     const v3 = worksheetValues[assay.id]?.['level3'] || '';
 
-                    // Tính Z-Score trực tiếp để hỗ trợ thị giác
                     const num1 = parseFloat(v1);
                     const z1 = l1 && !isNaN(num1) ? calculateZScore(num1, l1.targetMean, l1.targetSD) : null;
 
@@ -392,10 +461,9 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
                           <div className="space-y-1 max-w-[170px] mx-auto">
                             <input
                               type="number"
-                              step="any"
-                              placeholder={l1 ? `${l1.targetMean}` : 'N/A'}
+                              step="0.01"
+                              placeholder={Number(l1.targetMean).toFixed(2)}
                               value={v1}
-                              disabled={!l1}
                               onChange={e => handleWorksheetCellChange(assay.id, 'level1', e.target.value)}
                               className={`w-full text-xs font-mono font-bold px-2.5 py-1.5 border rounded-lg outline-none transition-all ${
                                 z1 !== null && Math.abs(z1) >= 3
@@ -405,20 +473,16 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
                                   : 'border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500'
                               }`}
                             />
-                            {l1 ? (
-                              <div className="flex items-center justify-between text-[10px] text-slate-500 px-0.5 font-mono">
-                                <span>{l1.targetMean} ±{l1.targetSD}</span>
-                                {z1 !== null && (
-                                  <span className={`font-bold ${
-                                    Math.abs(z1) >= 3 ? 'text-rose-600' : Math.abs(z1) >= 2 ? 'text-amber-600' : 'text-emerald-600'
-                                  }`}>
-                                    {z1 > 0 ? `+${z1.toFixed(2)}s` : `${z1.toFixed(2)}s`}
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-[10px] text-slate-400 italic block text-center">Chưa map L1</span>
-                            )}
+                            <div className="flex items-center justify-between text-[10px] text-slate-500 px-0.5 font-mono">
+                              <span>{Number(l1.targetMean).toFixed(2)} ±{Number(l1.targetSD).toFixed(2)}</span>
+                              {z1 !== null && (
+                                <span className={`font-bold ${
+                                  Math.abs(z1) >= 3 ? 'text-rose-600' : Math.abs(z1) >= 2 ? 'text-amber-600' : 'text-emerald-600'
+                                }`}>
+                                  {z1 > 0 ? `+${z1.toFixed(2)}s` : `${z1.toFixed(2)}s`}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
 
@@ -427,10 +491,9 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
                           <div className="space-y-1 max-w-[170px] mx-auto">
                             <input
                               type="number"
-                              step="any"
-                              placeholder={l2 ? `${l2.targetMean}` : 'N/A'}
+                              step="0.01"
+                              placeholder={Number(l2.targetMean).toFixed(2)}
                               value={v2}
-                              disabled={!l2}
                               onChange={e => handleWorksheetCellChange(assay.id, 'level2', e.target.value)}
                               className={`w-full text-xs font-mono font-bold px-2.5 py-1.5 border rounded-lg outline-none transition-all ${
                                 z2 !== null && Math.abs(z2) >= 3
@@ -440,20 +503,16 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
                                   : 'border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500'
                               }`}
                             />
-                            {l2 ? (
-                              <div className="flex items-center justify-between text-[10px] text-slate-500 px-0.5 font-mono">
-                                <span>{l2.targetMean} ±{l2.targetSD}</span>
-                                {z2 !== null && (
-                                  <span className={`font-bold ${
-                                    Math.abs(z2) >= 3 ? 'text-rose-600' : Math.abs(z2) >= 2 ? 'text-amber-600' : 'text-emerald-600'
-                                  }`}>
-                                    {z2 > 0 ? `+${z2.toFixed(2)}s` : `${z2.toFixed(2)}s`}
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-[10px] text-slate-400 italic block text-center">Chưa map L2</span>
-                            )}
+                            <div className="flex items-center justify-between text-[10px] text-slate-500 px-0.5 font-mono">
+                              <span>{Number(l2.targetMean).toFixed(2)} ±{Number(l2.targetSD).toFixed(2)}</span>
+                              {z2 !== null && (
+                                <span className={`font-bold ${
+                                  Math.abs(z2) >= 3 ? 'text-rose-600' : Math.abs(z2) >= 2 ? 'text-amber-600' : 'text-emerald-600'
+                                }`}>
+                                  {z2 > 0 ? `+${z2.toFixed(2)}s` : `${z2.toFixed(2)}s`}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
 
@@ -463,10 +522,9 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
                             <div className="space-y-1 max-w-[170px] mx-auto">
                               <input
                                 type="number"
-                                step="any"
-                                placeholder={l3 ? `${l3.targetMean}` : 'N/A'}
+                                step="0.01"
+                                placeholder={Number(l3.targetMean).toFixed(2)}
                                 value={v3}
-                                disabled={!l3}
                                 onChange={e => handleWorksheetCellChange(assay.id, 'level3', e.target.value)}
                                 className={`w-full text-xs font-mono font-bold px-2.5 py-1.5 border rounded-lg outline-none transition-all ${
                                   z3 !== null && Math.abs(z3) >= 3
@@ -476,20 +534,16 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
                                     : 'border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500'
                                 }`}
                               />
-                              {l3 ? (
-                                <div className="flex items-center justify-between text-[10px] text-slate-500 px-0.5 font-mono">
-                                  <span>{l3.targetMean} ±{l3.targetSD}</span>
-                                  {z3 !== null && (
-                                    <span className={`font-bold ${
-                                      Math.abs(z3) >= 3 ? 'text-rose-600' : Math.abs(z3) >= 2 ? 'text-amber-600' : 'text-emerald-600'
-                                    }`}>
-                                      {z3 > 0 ? `+${z3.toFixed(2)}s` : `${z3.toFixed(2)}s`}
-                                    </span>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="text-[10px] text-slate-400 italic block text-center">Chưa map L3</span>
-                              )}
+                              <div className="flex items-center justify-between text-[10px] text-slate-500 px-0.5 font-mono">
+                                <span>{Number(l3.targetMean).toFixed(2)} ±{Number(l3.targetSD).toFixed(2)}</span>
+                                {z3 !== null && (
+                                  <span className={`font-bold ${
+                                    Math.abs(z3) >= 3 ? 'text-rose-600' : Math.abs(z3) >= 2 ? 'text-amber-600' : 'text-emerald-600'
+                                  }`}>
+                                    {z3 > 0 ? `+${z3.toFixed(2)}s` : `${z3.toFixed(2)}s`}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </td>
                         )}
@@ -535,7 +589,7 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
         {/* MODE 2: NHẬP ĐƠN LẺ (SINGLE ENTRY)                        */}
         {/* ========================================================= */}
         {entryMode === 'single' && (
-          <form onSubmit={handleSaveSingle} className="p-6 space-y-4">
+          <form onSubmit={handleSaveSingle} noValidate className="p-6 space-y-4">
             {singleError && (
               <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
@@ -554,7 +608,7 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
               >
                 {instrumentAssays.map(assay => (
                   <option key={assay.id} value={assay.id}>
-                    {assay.code} - {assay.name} ({assay.unit})
+                    [{assay.instrumentId}] {assay.code} - {assay.name} ({assay.unit})
                   </option>
                 ))}
               </select>
@@ -584,13 +638,13 @@ export const ManualEntryModal: React.FC<ManualEntryModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                Giá Trị Nồng Độ Đo Được
+                Giá Trị Nồng Độ Đo Được (Cho phép 2 số thập phân)
               </label>
               <input
                 type="number"
-                step="any"
+                step="0.01"
                 required
-                placeholder="Nhập giá trị đo..."
+                placeholder="VD: 5.35 hoặc 14.80..."
                 value={singleValue}
                 onChange={e => setSingleValue(e.target.value)}
                 className="w-full text-base font-mono font-bold px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"

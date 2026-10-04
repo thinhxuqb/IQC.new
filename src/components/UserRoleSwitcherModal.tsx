@@ -53,7 +53,7 @@ export const UserRoleSwitcherModal: React.FC<UserRoleSwitcherModalProps> = ({
       ],
     },
     auditor: {
-      title: 'Chuyên Viên Kiểm Toán ISO 15189',
+      title: 'Chuyên Viên Kiểm Toán Chất Lượng',
       badgeColor: 'text-amber-700 bg-amber-50 border-amber-200',
       permissions: [
         'Tra cứu toàn bộ lịch sử chạy QC và biểu đồ Levey-Jennings (Chỉ đọc)',
@@ -76,7 +76,7 @@ export const UserRoleSwitcherModal: React.FC<UserRoleSwitcherModalProps> = ({
                 Phân Quyền Người Dùng & Chuyển Đổi Vai Trò
               </h3>
               <p className="text-xs text-slate-500">
-                Chuẩn an ninh thông tin & truy vết trách nhiệm ISO 15189
+                Chuẩn an ninh thông tin & truy vết trách nhiệm phòng xét nghiệm
               </p>
             </div>
           </div>

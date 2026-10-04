@@ -2,20 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { Instrument, QCLot, QCResult, TestAssay } from '../types/qc';
 import { LeveyJenningsChart } from './LeveyJenningsChart';
 import { 
-  BarChart2, 
   Grid2X2, 
   Square, 
-  Grid3X3, 
   Filter, 
   Server, 
-  TestTube, 
-  Maximize2, 
-  CheckSquare, 
-  Square as SquareIcon, 
+  Calendar,
   FileText, 
   Plus, 
-  Layers,
-  Sparkles,
   CheckCircle2,
   AlertTriangle,
   RotateCcw
@@ -44,18 +37,64 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
   onOpenManualEntry,
   onOpenReportModal,
 }) => {
-  // Chế độ xem: 'grid' (Đa biểu đồ) hoặc 'single' (Đơn lẻ)
+  // Chế độ xem: 'grid' (Toàn bộ các biểu đồ) hoặc 'single' (Đơn lẻ 1 chỉ số)
   const [chartViewMode, setChartViewMode] = useState<'grid' | 'single'>('grid');
 
   // Lọc theo máy
   const [selectedInstFilter, setSelectedInstFilter] = useState<string>('ALL');
 
-  // Số cột của lưới đa biểu đồ: 1, 2, 3
-  const [gridCols, setGridCols] = useState<1 | 2 | 3>(2);
+  // Bộ chọn thời gian DÙNG CHUNG cho tất cả xét nghiệm (Không chọn riêng từng xét nghiệm)
+  const [globalTimePreset, setGlobalTimePreset] = useState<'7d' | '15d' | '30d' | 'month' | 'last_month' | 'all' | 'custom'>('30d');
+  const [globalStartDate, setGlobalStartDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().slice(0, 10);
+  });
+  const [globalEndDate, setGlobalEndDate] = useState<string>(() => {
+    return new Date().toISOString().slice(0, 10);
+  });
 
-  // Danh sách ID xét nghiệm được chọn hiển thị trong chế độ Đa biểu đồ
+  const globalDateRange = useMemo(() => {
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+
+    if (globalTimePreset === '7d') {
+      const from = new Date(now);
+      from.setDate(from.getDate() - 7);
+      return { from: from.toISOString().slice(0, 10), to: todayStr };
+    }
+    if (globalTimePreset === '15d') {
+      const from = new Date(now);
+      from.setDate(from.getDate() - 15);
+      return { from: from.toISOString().slice(0, 10), to: todayStr };
+    }
+    if (globalTimePreset === '30d') {
+      const from = new Date(now);
+      from.setDate(from.getDate() - 30);
+      return { from: from.toISOString().slice(0, 10), to: todayStr };
+    }
+    if (globalTimePreset === 'month') {
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const from = new Date(year, month, 1);
+      const to = new Date(year, month + 1, 0);
+      return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
+    }
+    if (globalTimePreset === 'last_month') {
+      const year = now.getFullYear();
+      const month = now.getMonth() - 1;
+      const from = new Date(year, month, 1);
+      const to = new Date(year, month + 1, 0);
+      return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
+    }
+    if (globalTimePreset === 'custom') {
+      return { from: globalStartDate, to: globalEndDate };
+    }
+    return { from: '', to: '' }; // 'all'
+  }, [globalTimePreset, globalStartDate, globalEndDate]);
+
+  // Danh sách ID xét nghiệm được chọn hiển thị
   const [selectedAssayIds, setSelectedAssayIds] = useState<string[]>(() => {
-    // Mặc định chọn tất cả xét nghiệm của máy đầu tiên hoặc tất cả
     return assays.map(a => a.id);
   });
 
@@ -96,14 +135,14 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
   const currentSingleAssay = assays.find(a => a.id === selectedAssayId) || assays[0];
   const currentSingleLots = lots.filter(l => l.assayId === currentSingleAssay?.id);
 
-  // Hàm chuyển sang xem chi tiết 1 xét nghiệm
+  // Chuyển sang xem chi tiết 1 xét nghiệm
   const handleDrilldownToSingle = (assayId: string) => {
     onSelectAssay(assayId);
     setChartViewMode('single');
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       {/* Top Controls Header Bar */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
         {/* Left: View Mode Toggle & Filter by Instrument */}
@@ -114,18 +153,18 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
               onClick={() => setChartViewMode('grid')}
               className={`px-3 py-1.5 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 chartViewMode === 'grid' 
-                  ? 'bg-indigo-600 text-white shadow-xs' 
+                  ? 'bg-slate-900 text-white shadow-xs' 
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Grid2X2 className="w-3.5 h-3.5" />
-              <span>Xem Đa Biểu Đồ ({displayedAssays.length})</span>
+              <span>Toàn Bộ Xét Nghiệm ({displayedAssays.length})</span>
             </button>
             <button
               onClick={() => setChartViewMode('single')}
               className={`px-3 py-1.5 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 chartViewMode === 'single' 
-                  ? 'bg-indigo-600 text-white shadow-xs' 
+                  ? 'bg-slate-900 text-white shadow-xs' 
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -162,12 +201,11 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
                   const inst = e.target.value;
                   setSelectedInstFilter(inst);
                   if (inst !== 'ALL') {
-                    // Tự động kích hoạt toàn bộ xét nghiệm của máy đó
                     const matchIds = assays.filter(a => a.instrumentId === inst).map(a => a.id);
                     setSelectedAssayIds(prev => Array.from(new Set([...prev, ...matchIds])));
                   }
                 }}
-                className="text-xs font-bold py-1.5 px-3 border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500"
+                className="text-xs font-bold py-1.5 px-3 border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               >
                 <option value="ALL">Tất cả thiết bị ({instruments.length})</option>
                 {instruments.map(inst => (
@@ -176,39 +214,6 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
                   </option>
                 ))}
               </select>
-            </div>
-          )}
-
-          {/* Grid Column Selector */}
-          {chartViewMode === 'grid' && (
-            <div className="hidden sm:flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-              <button
-                onClick={() => setGridCols(1)}
-                className={`p-1.5 rounded text-xs font-bold transition-all cursor-pointer ${
-                  gridCols === 1 ? 'bg-white shadow-2xs text-indigo-700' : 'text-slate-500 hover:text-slate-800'
-                }`}
-                title="Hiển thị 1 cột (Lớn)"
-              >
-                <Square className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setGridCols(2)}
-                className={`p-1.5 rounded text-xs font-bold transition-all cursor-pointer ${
-                  gridCols === 2 ? 'bg-white shadow-2xs text-indigo-700' : 'text-slate-500 hover:text-slate-800'
-                }`}
-                title="Hiển thị 2 cột (Chuẩn cân đối)"
-              >
-                <Grid2X2 className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setGridCols(3)}
-                className={`p-1.5 rounded text-xs font-bold transition-all cursor-pointer ${
-                  gridCols === 3 ? 'bg-white shadow-2xs text-indigo-700' : 'text-slate-500 hover:text-slate-800'
-                }`}
-                title="Hiển thị 3 cột (Thu nhỏ tổng quan)"
-              >
-                <Grid3X3 className="w-3.5 h-3.5" />
-              </button>
             </div>
           )}
         </div>
@@ -231,26 +236,130 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
               className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
               <FileText className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Xuất Báo Cáo Tháng (PDF)</span>
+              <span>Xuất Báo Cáo QC (PDF)</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Multi-Chart Assay Filter Tags (Khi ở chế độ Đa biểu đồ) */}
-      {chartViewMode === 'grid' && (
-        <div className="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span className="font-bold text-slate-700 flex items-center gap-1.5">
-              <TestTube className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Chọn các xét nghiệm hiển thị ({displayedAssays.length} / {availableAssaysForFilter.length}):</span>
+      {/* BỘ CHỌN THỜI GIAN DÙNG CHUNG CHO TẤT CẢ XÉT NGHIỆM */}
+      <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
+            <Calendar className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="font-bold text-slate-900 block leading-tight">
+              Khoảng Thời Gian Biểu Đồ Dùng Chung
             </span>
+            <span className="text-[11px] text-slate-500">
+              Đồng bộ dữ liệu thời gian cho toàn bộ các xét nghiệm hiển thị bên dưới
+            </span>
+          </div>
+        </div>
 
+        <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center p-1 bg-slate-100 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setGlobalTimePreset('7d')}
+              className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                globalTimePreset === '7d' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              7 ngày
+            </button>
+            <button
+              type="button"
+              onClick={() => setGlobalTimePreset('15d')}
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                globalTimePreset === '15d' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              15 ngày
+            </button>
+            <button
+              type="button"
+              onClick={() => setGlobalTimePreset('30d')}
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                globalTimePreset === '30d' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              30 ngày
+            </button>
+            <button
+              type="button"
+              onClick={() => setGlobalTimePreset('month')}
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                globalTimePreset === 'month' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Tháng này
+            </button>
+            <button
+              type="button"
+              onClick={() => setGlobalTimePreset('last_month')}
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                globalTimePreset === 'last_month' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Tháng trước
+            </button>
+            <button
+              type="button"
+              onClick={() => setGlobalTimePreset('all')}
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                globalTimePreset === 'all' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Tất cả
+            </button>
+            <button
+              type="button"
+              onClick={() => setGlobalTimePreset('custom')}
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                globalTimePreset === 'custom' ? 'bg-indigo-600 text-white shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Tùy chọn ngày
+            </button>
+          </div>
+
+          {globalTimePreset === 'custom' && (
+            <div className="flex items-center gap-1.5 font-mono bg-indigo-50/80 px-2.5 py-1 rounded-lg border border-indigo-200">
+              <span className="text-indigo-900 font-medium">Từ:</span>
+              <input
+                type="date"
+                value={globalStartDate}
+                onChange={e => setGlobalStartDate(e.target.value)}
+                className="px-2 py-0.5 border border-indigo-300 rounded bg-white text-slate-900 text-xs"
+              />
+              <span className="text-indigo-400">→</span>
+              <span className="text-indigo-900 font-medium">Đến:</span>
+              <input
+                type="date"
+                value={globalEndDate}
+                onChange={e => setGlobalEndDate(e.target.value)}
+                className="px-2 py-0.5 border border-indigo-300 rounded bg-white text-slate-900 text-xs"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Multi-Chart Assay Filter Tags (Khi ở chế độ hiển thị toàn bộ) */}
+      {chartViewMode === 'grid' && (
+        <div className="bg-white rounded-xl border border-slate-200 p-3.5 shadow-xs space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-bold text-slate-700 flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-slate-500" />
+              <span>Bộ Lọc Xét Nghiệm Hiển Thị ({displayedAssays.length}/{availableAssaysForFilter.length}):</span>
+            </span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleSelectAllCurrent}
-                className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 hover:underline cursor-pointer"
+                className="text-xs text-indigo-700 hover:text-indigo-900 font-semibold cursor-pointer"
               >
                 Chọn Tất Cả
               </button>
@@ -258,30 +367,30 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
               <button
                 type="button"
                 onClick={handleDeselectAllCurrent}
-                className="text-[11px] font-bold text-slate-500 hover:text-slate-800 hover:underline cursor-pointer"
+                className="text-xs text-slate-500 hover:text-slate-800 font-medium cursor-pointer"
               >
-                Bỏ Chọn
+                Bỏ Chọn Hết
               </button>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
-            {availableAssaysForFilter.map(assay => {
-              const isSelected = selectedAssayIds.includes(assay.id);
+          <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pt-1">
+            {availableAssaysForFilter.map(a => {
+              const isSelected = selectedAssayIds.includes(a.id);
               return (
                 <button
-                  key={assay.id}
+                  key={a.id}
                   type="button"
-                  onClick={() => handleToggleAssay(assay.id)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${
-                    isSelected
-                      ? 'bg-indigo-50 border-indigo-300 text-indigo-900 font-bold shadow-2xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 opacity-60'
+                  onClick={() => handleToggleAssay(a.id)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 cursor-pointer border ${
+                    isSelected 
+                      ? 'bg-indigo-50 border-indigo-300 text-indigo-950 font-bold shadow-2xs' 
+                      : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
                   }`}
                 >
-                  <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-indigo-600' : 'bg-slate-300'}`} />
-                  <span className="font-mono text-[10px] text-slate-500">[{assay.instrumentId}]</span>
-                  <span>{assay.code}</span>
+                  <span className="font-mono text-[10px] text-slate-400">[{a.instrumentId}]</span>
+                  <span>{a.code}</span>
+                  <span className="text-[10px] opacity-70">({a.name})</span>
                 </button>
               );
             })}
@@ -290,23 +399,16 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
       )}
 
       {/* ======================================================== */}
-      {/* CHẾ ĐỘ 1: XEM ĐA BIỂU ĐỒ (MULTI-CHART GRID VIEW)         */}
+      {/* HIỂN THỊ TOÀN BỘ THEO CHIỀU NGANG (KHÔNG CHIA 2 CỘT)     */}
       {/* ======================================================== */}
       {chartViewMode === 'grid' && (
-        <div>
+        <div className="w-full">
           {displayedAssays.length > 0 ? (
-            <div className={`grid gap-4 ${
-              gridCols === 1 
-                ? 'grid-cols-1' 
-                : gridCols === 2 
-                ? 'grid-cols-1 lg:grid-cols-2' 
-                : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-            }`}>
+            <div className="flex flex-col gap-6 w-full">
               {displayedAssays.map(assay => {
                 const assayLots = lots.filter(l => l.assayId === assay.id);
                 const assayResults = results.filter(r => r.assayId === assay.id);
                 
-                // Kiểm tra xem xét nghiệm này có vi phạm gần nhất không
                 const latestResult = [...assayResults].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
                 const isRejected = latestResult?.status === 'REJECTED';
                 const isWarning = latestResult?.status === 'WARNING';
@@ -314,61 +416,62 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
                 return (
                   <div
                     key={assay.id}
-                    className="bg-white rounded-xl border border-slate-200 shadow-2xs hover:shadow-sm transition-all overflow-hidden flex flex-col justify-between"
+                    className="bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-md transition-all overflow-hidden w-full"
                   >
-                    {/* Compact Card Header */}
-                    <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-900 text-white">
+                    {/* Full Width Card Header */}
+                    <div className="p-3.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-slate-900 text-white">
                           {assay.instrumentId}
                         </span>
                         <div>
-                          <h4 className="font-bold text-xs text-slate-900 leading-tight">
+                          <h4 className="font-bold text-sm text-slate-900 leading-tight">
                             {assay.code} - {assay.name}
                           </h4>
-                          <span className="text-[10px] text-slate-500 font-medium">
-                            Đơn vị: {assay.unit} · TEa: {assay.cliaTeaPercent}%
+                          <span className="text-xs text-slate-500 font-medium">
+                            Đơn vị: <strong>{assay.unit}</strong> · Giới hạn sai số TEa: <strong>{assay.cliaTeaPercent}%</strong> · Phương pháp: {assay.method}
                           </span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         {isRejected ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
-                            <AlertTriangle className="w-3 h-3" />
-                            Từ chối
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            Từ chối (Vi phạm Westgard)
                           </span>
                         ) : isWarning ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
-                            <AlertTriangle className="w-3 h-3" />
-                            Cảnh báo
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            Cảnh báo theo dõi
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Đạt QC
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Đạt kiểm chuẩn QC
                           </span>
                         )}
 
                         <button
                           onClick={() => handleDrilldownToSingle(assay.id)}
-                          className="p-1 rounded text-slate-500 hover:text-indigo-700 hover:bg-slate-200 transition-colors cursor-pointer"
-                          title="Phóng to & Xem phân tích chi tiết"
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-indigo-700 hover:bg-slate-200 transition-colors cursor-pointer flex items-center gap-1"
+                          title="Xem phân tích chi tiết từng mức"
                         >
-                          <Maximize2 className="w-3.5 h-3.5" />
+                          <span>Xem Chi Tiết</span>
                         </button>
                       </div>
                     </div>
 
-                    {/* Chart Canvas */}
-                    <div className="p-2">
+                    {/* Chart Canvas: Full Width Across Horizontal Space */}
+                    <div className="p-3 w-full">
                       <LeveyJenningsChart
                         assay={assay}
                         lots={assayLots}
                         results={results}
                         onSelectResultForCapa={onSelectResultForCapa}
-                        compact={true}
-                        onZoomIn={() => handleDrilldownToSingle(assay.id)}
+                        compact={false}
+                        globalDateRange={globalDateRange}
+                        hideIndividualTimeFilter={true}
                       />
                     </div>
                   </div>
@@ -402,7 +505,7 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
       {/* CHẾ ĐỘ 2: XEM ĐƠN CHỈ SỐ (SINGLE VIEW)                   */}
       {/* ======================================================== */}
       {chartViewMode === 'single' && currentSingleAssay && (
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs w-full">
           <div className="mb-4 flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
@@ -417,7 +520,7 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
               className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 flex items-center gap-1 cursor-pointer bg-indigo-50 px-3 py-1.5 rounded-lg"
             >
               <Grid2X2 className="w-3.5 h-3.5" />
-              <span>Quay Lại Xem Đa Biểu Đồ</span>
+              <span>Quay Lại Xem Toàn Bộ</span>
             </button>
           </div>
 
@@ -427,6 +530,8 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
             results={results}
             onSelectResultForCapa={onSelectResultForCapa}
             compact={false}
+            globalDateRange={globalDateRange}
+            hideIndividualTimeFilter={true}
           />
         </div>
       )}

@@ -191,15 +191,15 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                 </div>
               </div>
 
-              {/* User Confirmation Buttons (Đồng ý cập nhật hay không) */}
+              {/* User Confirmation Buttons (Đồng ý cập nhật) */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                 {!isAutoUpdating ? (
                   <>
                     <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      Bạn có muốn cập nhật lên phiên bản này ngay không?
+                      Bạn có muốn cập nhật lên phiên bản mới ngay không?
                     </p>
                     <p className="text-[11px] text-slate-600">
-                      Hệ thống sẽ <strong>tự động tải file và cài đặt ngầm</strong>, không cần bạn phải bấm tải và chạy file .exe thủ công.
+                      Chỉ cần bấm <strong>&quot;Đồng Ý Cập Nhật&quot;</strong>, phần mềm sẽ <strong>tự tải file update ẩn, tự chạy cài đặt và tự động mở lại phần mềm phiên bản mới</strong>.
                     </p>
                     <div className="grid grid-cols-2 gap-3 pt-1">
                       <button
@@ -207,7 +207,7 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                         className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
                       >
                         <Download className="w-4 h-4" />
-                        <span>Đồng Ý Tự Động Cập Nhật</span>
+                        <span>Đồng Ý Cập Nhật</span>
                       </button>
                       <button
                         onClick={onClose}
@@ -222,7 +222,7 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-indigo-950 flex items-center gap-2">
                         <RefreshCw className="w-4 h-4 text-indigo-600 animate-spin" />
-                        <span>Đang Tự Động Tải & Cài Đặt...</span>
+                        <span>Đang Tự Động Tải Ẩn & Cài Đặt...</span>
                       </span>
                       <span className="font-mono font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded">
                         {updatePercent}%
@@ -244,7 +244,7 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                     {updateComplete && (
                       <div className="p-2.5 bg-emerald-100 text-emerald-900 rounded-lg text-xs font-semibold text-center flex items-center justify-center gap-1.5">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        <span>Cài đặt hoàn tất! Phiên bản mới đã sẵn sàng.</span>
+                        <span>Cài đặt hoàn tất! Đang tự động mở lại phần mềm phiên bản mới...</span>
                       </div>
                     )}
                   </div>
@@ -263,12 +263,12 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                     Ứng dụng đang ở phiên bản {APP_CURRENT_VERSION}!
                   </h4>
                   <p className="text-xs text-slate-600">
-                    Hệ thống đã được tích hợp đầy đủ tính năng mới nhất theo chuẩn quản lý chất lượng ISO 15189:2022.
+                    Hệ thống đã được tích hợp đầy đủ tính năng mới nhất theo chuẩn quản lý chất lượng xét nghiệm.
                   </p>
                 </div>
               </div>
 
-              {/* What's new in v1.1.2 */}
+              {/* What's new in v1.1.3 */}
               <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
                   <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -276,16 +276,16 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                 </div>
                 <ul className="text-[11px] text-emerald-900 space-y-1 list-disc pl-4">
                   <li>
-                    <strong>Sửa thông tin phòng xét nghiệm:</strong> Tùy chỉnh tên bệnh viện, phòng xét nghiệm, địa chỉ, hotline, email, website và mã cơ sở.
+                    <strong>Thanh menu tối ưu vừa màn hình:</strong> Hiển thị gọn gàng trong chiều ngang màn hình, không bị cuộn ngang.
                   </li>
                   <li>
-                    <strong>Nhân sự phê duyệt ISO 15189:</strong> Cấu hình họ tên và chức danh Trưởng khoa, Phụ trách kỹ thuật & Quản lý chất lượng QC.
+                    <strong>Biểu đồ L-J toàn chiều ngang & chọn thời gian chung:</strong> Bộ chọn thời gian dùng chung cho tất cả xét nghiệm, mỗi biểu đồ hiển thị toàn bộ chiều ngang màn hình.
                   </li>
                   <li>
-                    <strong>Tự động đồng bộ báo cáo:</strong> Thông tin phòng xét nghiệm tự động xuất hiện trên tiêu đề và phần ký duyệt khi in ấn / xuất PDF.
+                    <strong>Nhập thủ công & sửa Mean/SD 2 số thập phân:</strong> Khắc phục triệt để lỗi nhập kết quả thủ công, hỗ trợ sửa Mean & SD chính xác 2 chữ số thập phân.
                   </li>
                   <li>
-                    <strong>Hỗ trợ tự động cập nhật:</strong> Tương thích hoàn toàn với GitHub Actions Workflow để tự động build và tải bản .exe mới.
+                    <strong>Xuất PDF & Tự động cập nhật ngầm:</strong> Báo cáo PDF đầy đủ Header/Footer không bị cắt; bấm &quot;Đồng Ý Cập Nhật&quot; tự tải ẩn, tự cài đặt và tự mở lại phần mềm mới.
                   </li>
                 </ul>
               </div>

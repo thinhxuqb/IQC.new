@@ -1,4 +1,14 @@
-const { app, BrowserWindow, shell, ipcMain } = require('electron');
+const fs = require('fs');
+const path = require('path');
+
+const rootDir = path.resolve(__dirname, '..');
+const electronDir = path.join(rootDir, 'electron');
+
+if (!fs.existsSync(electronDir)) {
+  fs.mkdirSync(electronDir, { recursive: true });
+}
+
+const mainCjsContent = `const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
 const https = require('https');
 const http = require('http');
@@ -25,7 +35,6 @@ function createWindow() {
     autoHideMenuBar: false,
   });
 
-  // Load production dist or local dev server
   const isDev = !app.isPackaged && process.env.NODE_ENV === 'development';
   if (isDev) {
     mainWindow.loadURL('http://localhost:3000');
@@ -33,7 +42,6 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
-  // Open external links in default browser
   mainWindow.webContents.setWindowOpenHandler(({ url: targetUrl }) => {
     shell.openExternal(targetUrl);
     return { action: 'deny' };
@@ -44,11 +52,11 @@ function createWindow() {
   });
 }
 
-// Xử lý tự động tải gói cập nhật .EXE ẩn, tự động cài đặt ngầm và tự mở lại phần mềm phiên bản mới
+// Xử lý tự động tải gói cập nhật .EXE ẩn, tự chạy cài đặt ngầm và tự mở lại phần mềm phiên bản mới
 ipcMain.handle('app-update:download-and-install', async (_event, { downloadUrl }) => {
   return new Promise((resolve, reject) => {
     try {
-      const tempPath = path.join(os.tmpdir(), `IQC-Update-Setup-${Date.now()}.exe`);
+      const tempPath = path.join(os.tmpdir(), \`IQC-Update-Setup-\${Date.now()}.exe\`);
       const fileStream = fs.createWriteStream(tempPath);
 
       function download(urlToGet) {
@@ -61,13 +69,12 @@ ipcMain.handle('app-update:download-and-install', async (_event, { downloadUrl }
         };
 
         client.get(urlToGet, options, (response) => {
-          // Xử lý chuyển hướng HTTP (301, 302, 307, 308) từ GitHub Release CDN
           if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
             return download(response.headers.location);
           }
 
           if (response.statusCode !== 200) {
-            reject(new Error(`Tải tệp cập nhật thất bại: HTTP ${response.statusCode}`));
+            reject(new Error(\`Tải tệp cập nhật thất bại: HTTP \${response.statusCode}\`));
             return;
           }
 
@@ -90,27 +97,26 @@ ipcMain.handle('app-update:download-and-install', async (_event, { downloadUrl }
                 mainWindow.webContents.send('app-update:installing', { tempPath });
               }
 
-              // Tạo script chạy ngầm: Đợi app cũ đóng -> Chạy bộ cài ẩn (/S) -> Tự động mở lại phần mềm mới
               setTimeout(() => {
                 try {
                   const currentExePath = process.execPath;
-                  const updaterCmdPath = path.join(os.tmpdir(), `iqc-silent-updater-${Date.now()}.cmd`);
+                  const updaterCmdPath = path.join(os.tmpdir(), \`iqc-silent-updater-\${Date.now()}.cmd\`);
                   const cmdContent = [
                     '@echo off',
                     'chcp 65001 >nul',
                     'timeout /t 2 /nobreak >nul',
-                    `start "" /wait "${tempPath}" /S`,
+                    \`start "" /wait "\${tempPath}" /S\`,
                     'timeout /t 1 /nobreak >nul',
-                    'if exist "%LOCALAPPDATA%\\Programs\\iqc-by-thinhxu\\IQC by ThinhXu.exe" (',
-                    '  start "" "%LOCALAPPDATA%\\Programs\\iqc-by-thinhxu\\IQC by ThinhXu.exe"',
-                    ') else if exist "%LOCALAPPDATA%\\Programs\\IQC by ThinhXu\\IQC by ThinhXu.exe" (',
-                    '  start "" "%LOCALAPPDATA%\\Programs\\IQC by ThinhXu\\IQC by ThinhXu.exe"',
-                    `) else if exist "${currentExePath}" (`,
-                    `  start "" "${currentExePath}"`,
+                    'if exist "%LOCALAPPDATA%\\\\Programs\\\\iqc-by-thinhxu\\\\IQC by ThinhXu.exe" (',
+                    '  start "" "%LOCALAPPDATA%\\\\Programs\\\\iqc-by-thinhxu\\\\IQC by ThinhXu.exe"',
+                    ') else if exist "%LOCALAPPDATA%\\\\Programs\\\\IQC by ThinhXu\\\\IQC by ThinhXu.exe" (',
+                    '  start "" "%LOCALAPPDATA%\\\\Programs\\\\IQC by ThinhXu\\\\IQC by ThinhXu.exe"',
+                    \`) else if exist "\${currentExePath}" (\`,
+                    \`  start "" "\${currentExePath}"\`,
                     ')',
-                    `del /f /q "${tempPath}" >nul 2>&1`,
+                    \`del /f /q "\${tempPath}" >nul 2>&1\`,
                     'del "%~f0" >nul 2>&1',
-                  ].join('\r\n');
+                  ].join('\\r\\n');
 
                   fs.writeFileSync(updaterCmdPath, cmdContent, 'utf8');
 
@@ -122,7 +128,6 @@ ipcMain.handle('app-update:download-and-install', async (_event, { downloadUrl }
                   child.unref();
                   app.quit();
                 } catch {
-                  // Dự phòng nếu spawn script bị chặn
                   const child = spawn(tempPath, ['/S'], {
                     detached: true,
                     stdio: 'ignore',
@@ -160,3 +165,52 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+`;
+
+const preloadCjsContent = `const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  isElectron: true,
+  downloadAndInstallUpdate: (downloadUrl) => ipcRenderer.invoke('app-update:download-and-install', { downloadUrl }),
+  onUpdateProgress: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('app-update:progress', handler);
+    return () => ipcRenderer.removeListener('app-update:progress', handler);
+  },
+  onUpdateInstalling: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('app-update:installing', handler);
+    return () => ipcRenderer.removeListener('app-update:installing', handler);
+  }
+});
+`;
+
+const electronBuilderConfig = {
+  appId: 'com.thinhxu.iqc',
+  productName: 'IQC by ThinhXu',
+  directories: {
+    output: 'dist-electron',
+  },
+  files: [
+    'dist/**/*',
+    'electron/**/*',
+  ],
+  extraMetadata: {
+    main: 'electron/main.cjs',
+  },
+  win: {
+    target: ['nsis', 'portable'],
+  },
+  nsis: {
+    oneClick: true,
+    perMachine: false,
+    runAfterFinish: true,
+    createDesktopShortcut: true,
+    createStartMenuShortcut: true,
+  },
+};
+
+fs.writeFileSync(path.join(electronDir, 'main.cjs'), mainCjsContent, 'utf8');
+fs.writeFileSync(path.join(electronDir, 'preload.cjs'), preloadCjsContent, 'utf8');
+fs.writeFileSync(path.join(rootDir, 'electron-builder.json'), JSON.stringify(electronBuilderConfig, null, 2), 'utf8');
+console.log('Prepared electron/main.cjs, electron/preload.cjs, and electron-builder.json for silent auto-update.');

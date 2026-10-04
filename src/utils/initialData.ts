@@ -9,15 +9,15 @@ export const DEFAULT_LAB_INFO: LabInfo = {
   phone: '028.3899.6688 - 0912.345.678',
   email: 'xetnghiem@benhvientrungtam.vn',
   website: 'https://benhvientrungtam.vn/khoa-xet-nghiem',
-  labCode: 'LAB-ISO-15189-HCM',
+  labCode: 'LAB-QC-HCM',
   headOfDepartment: 'TS. BS. Nguyễn Văn Hùng',
   headTitle: 'Trưởng Khoa Xét Nghiệm',
   technicalSupervisor: 'ThS. Lê Thị Thanh Mai',
   supervisorTitle: 'Kỹ Thuật Viên Trưởng / Quản Lý Chất Lượng',
-  accreditationStandard: 'Tiêu Chuẩn Quốc Tế ISO 15189:2022',
-  documentCodePrefix: 'ISO15189-BM-QC',
+  accreditationStandard: 'Tiêu Chuẩn Quản Lý Chất Lượng Xét Nghiệm',
+  documentCodePrefix: 'BM-QC',
   slogan: 'Chính xác · Kịp thời · Chuẩn mực · Tận tâm vì sức khỏe người bệnh',
-  notes: 'Phòng xét nghiệm áp dụng nghiêm ngặt quy trình quản lý chất lượng theo tiêu chuẩn ISO 15189:2022.',
+  notes: 'Phòng xét nghiệm áp dụng nghiêm ngặt quy trình quản lý chất lượng nội kiểm xét nghiệm.',
 };
 
 export const INITIAL_USERS: UserProfile[] = [
@@ -50,7 +50,7 @@ export const INITIAL_USERS: UserProfile[] = [
     password: '123',
     name: 'ThS. Lê Thị Thanh Mai',
     role: 'manager',
-    roleTitle: 'Kỹ thuật viên trưởng / Quản lý chất lượng ISO 15189',
+    roleTitle: 'Kỹ thuật viên trưởng / Quản lý chất lượng QC',
     department: 'Tổ Quản lý Chất lượng QC',
     code: 'KTVT-014',
     phone: '0983.888.999',
@@ -726,7 +726,7 @@ export function generateInitialResults(): QCResult[] {
         syncStatus: 'SYNCED',
       };
 
-      // Nếu là điểm vi phạm ở ngày thứ 4, tạo hồ sơ CAPA đã xử lý hoàn tất chuẩn ISO 15189
+      // Nếu là điểm vi phạm ở ngày thứ 4, tạo hồ sơ CAPA đã xử lý hoàn tất
       if (evalResult.status === 'REJECTED') {
         resultItem.capa = {
           rootCause: 'Bọt khí xuất hiện tại kim hút mẫu vi thể do ống xi-lanh phân phối bị hở gioăng cao su nhẹ.',
@@ -770,7 +770,7 @@ export function generateInitialMappings(lots: QCLot[] = INITIAL_LOTS, assays: Te
         assayId: assay.id,
         materialId,
         active: true,
-        notes: `Cấu hình kiểm chuẩn chuẩn hóa ISO 15189 cho ${assay.name}`,
+        notes: `Cấu hình kiểm chuẩn chuẩn hóa cho ${assay.name}`,
         updatedAt: '2026-09-01T00:00:00.000Z',
         levelConfigs: assayLots.map(l => ({
           level: l.level,

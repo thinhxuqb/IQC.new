@@ -81,7 +81,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </span>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold font-mono text-emerald-700">{inControlRate}%</span>
-            <span className="text-xs text-slate-500">chuẩn ISO 15189</span>
+            <span className="text-xs text-slate-500">đạt chuẩn chất lượng</span>
           </div>
           <div className="mt-2 text-[11px] text-slate-500 font-mono">
             <span>{inControlRuns} / {totalRuns} lượt chạy đạt</span>
@@ -222,7 +222,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Assay Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredAssays.map((assay) => {
-          const assayResults = results.filter((r) => r.assayId === assay.id);
+          const assayResults = results
+            .filter((r) => r.assayId === assay.id)
+            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
           const latestResult = assayResults.length > 0 ? assayResults[assayResults.length - 1] : null;
           const assayLots = lots.filter((l) => l.assayId === assay.id);
           const lotL1 = assayLots.find((l) => l.level === 'level1');

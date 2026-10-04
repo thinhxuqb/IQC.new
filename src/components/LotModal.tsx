@@ -38,13 +38,20 @@ export const LotModal: React.FC<LotModalProps> = ({
   const [expDate, setExpDate] = useState<string>(
     lotToEdit?.expDate || new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
-  const [targetMean, setTargetMean] = useState<number>(lotToEdit?.targetMean || 0);
-  const [targetSD, setTargetSD] = useState<number>(lotToEdit?.targetSD || 0);
+  const [targetMeanStr, setTargetMeanStr] = useState<string>(
+    lotToEdit?.targetMean ? Number(lotToEdit.targetMean).toFixed(2) : ''
+  );
+  const [targetSDStr, setTargetSDStr] = useState<string>(
+    lotToEdit?.targetSD ? Number(lotToEdit.targetSD).toFixed(2) : ''
+  );
   const [active, setActive] = useState<boolean>(lotToEdit ? lotToEdit.active : true);
   const [errorMsg, setErrorMsg] = useState<string>('');
 
   const selectedAssay = assays.find((a) => a.id === selectedAssayId) || assays[0];
   const instrument = instruments.find((i) => i.id === selectedAssay?.instrumentId);
+
+  const targetMean = parseFloat(targetMeanStr) || 0;
+  const targetSD = parseFloat(targetSDStr) || 0;
 
   // Cập nhật tên mức nồng độ tự động khi đổi level
   const handleLevelChange = (newLevel: QCLevel) => {
@@ -69,11 +76,11 @@ export const LotModal: React.FC<LotModalProps> = ({
       return;
     }
     if (targetMean <= 0 || isNaN(targetMean)) {
-      setErrorMsg('Vui lòng nhập giá trị Mean ấn định (> 0).');
+      setErrorMsg('Vui lòng nhập giá trị Mean ấn định (> 0, cho phép 2 số thập phân).');
       return;
     }
     if (targetSD <= 0 || isNaN(targetSD)) {
-      setErrorMsg('Vui lòng nhập giá trị SD ấn định (> 0).');
+      setErrorMsg('Vui lòng nhập giá trị SD ấn định (> 0, cho phép 2 số thập phân).');
       return;
     }
 
@@ -91,8 +98,8 @@ export const LotModal: React.FC<LotModalProps> = ({
       manufacturer: manufacturer.trim() || 'Chưa rõ',
       controlName: controlName.trim() || 'Vật liệu kiểm tra chất lượng',
       expDate,
-      targetMean: Number(targetMean.toFixed(selectedAssay.decimalPlaces + 2)),
-      targetSD: Number(targetSD.toFixed(selectedAssay.decimalPlaces + 2)),
+      targetMean: Number(targetMean.toFixed(2)),
+      targetSD: Number(targetSD.toFixed(2)),
       targetCV: Number(calculatedCV.toFixed(2)),
       active,
       history: lotToEdit?.history || [],
@@ -115,7 +122,7 @@ export const LotModal: React.FC<LotModalProps> = ({
                 {isEditing ? 'Chỉnh Sửa Vật Liệu QC / Lô' : 'Khai Báo Vật Liệu QC & Mức Nồng Độ'}
               </h3>
               <p className="text-xs text-slate-300">
-                Thiết lập thông số kiểm chuẩn Mean, SD, CV% chuẩn ISO 15189
+                Thiết lập thông số kiểm chuẩn Mean, SD, CV% (Hỗ trợ 2 số thập phân)
               </p>
             </div>
           </div>
@@ -261,13 +268,13 @@ export const LotModal: React.FC<LotModalProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Giá Trị Mean (*):
+                  Giá Trị Mean (Cho phép 2 số thập phân) (*):
                 </label>
                 <input
                   type="number"
-                  step="any"
-                  value={targetMean || ''}
-                  onChange={(e) => setTargetMean(parseFloat(e.target.value) || 0)}
+                  step="0.01"
+                  value={targetMeanStr}
+                  onChange={(e) => setTargetMeanStr(e.target.value)}
                   placeholder="VD: 5.25"
                   className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-cyan-500 font-mono font-bold bg-white"
                   required
@@ -276,13 +283,13 @@ export const LotModal: React.FC<LotModalProps> = ({
 
               <div>
                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Độ Lệch Chuẩn SD (*):
+                  Độ Lệch Chuẩn SD (Cho phép 2 số thập phân) (*):
                 </label>
                 <input
                   type="number"
-                  step="any"
-                  value={targetSD || ''}
-                  onChange={(e) => setTargetSD(parseFloat(e.target.value) || 0)}
+                  step="0.01"
+                  value={targetSDStr}
+                  onChange={(e) => setTargetSDStr(e.target.value)}
                   placeholder="VD: 0.17"
                   className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-cyan-500 font-mono font-bold bg-white"
                   required

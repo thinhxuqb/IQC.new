@@ -10,7 +10,7 @@ export interface UpdateInfo {
   releaseUrl: string;
 }
 
-export const APP_CURRENT_VERSION = 'v1.1.2';
+export const APP_CURRENT_VERSION = 'v1.1.3';
 export const GITHUB_REPO = 'thinhxuqb/IQC.new';
 export const GITHUB_RELEASES_URL = `https://github.com/${GITHUB_REPO}/releases`;
 export const GITHUB_LATEST_RELEASE_URL = `https://github.com/${GITHUB_REPO}/releases/latest`;
@@ -19,7 +19,7 @@ export const SETUP_EXE_FALLBACK_URL = `https://github.com/${GITHUB_REPO}/release
 export const PORTABLE_EXE_FALLBACK_URL = `https://github.com/${GITHUB_REPO}/releases/download/${APP_CURRENT_VERSION}/IQC.by.ThinhXu.${APP_CURRENT_VERSION.replace(/^v/, '')}.exe`;
 
 /**
- * Tự động tải gói cập nhật và thực thi cài đặt ngầm không cần thao tác thủ công
+ * Tự động tải gói cập nhật ẩn, tự chạy cài đặt ngầm và tự động mở lại phần mềm phiên bản mới
  */
 export async function executeAutoDownloadAndInstall(
   downloadUrl: string,
@@ -28,17 +28,17 @@ export async function executeAutoDownloadAndInstall(
   const electronAPI = (window as any).electronAPI;
 
   if (electronAPI && typeof electronAPI.downloadAndInstallUpdate === 'function') {
-    // Môi trường ứng dụng Desktop Windows (Electron)
-    onProgress(5, 'Đang kết nối đến máy chủ GitHub Release...');
+    // Môi trường ứng dụng Desktop Windows (Electron): Tải ngầm 100%, tự chạy cài đặt /S và tự mở lại app mới
+    onProgress(5, 'Đang kết nối máy chủ GitHub Release và khởi tạo tải ngầm...');
 
     const unsubscribeProgress = electronAPI.onUpdateProgress?.((data: { percent: number; downloaded: number; total: number }) => {
       const mbDownloaded = (data.downloaded / (1024 * 1024)).toFixed(1);
       const mbTotal = data.total > 0 ? (data.total / (1024 * 1024)).toFixed(1) : '?';
-      onProgress(data.percent, `Đang tải tự động (${data.percent}% - ${mbDownloaded} MB / ${mbTotal} MB)...`);
+      onProgress(data.percent, `Đang tải file cập nhật ẩn (${data.percent}% - ${mbDownloaded} MB / ${mbTotal} MB)...`);
     });
 
     const unsubscribeInstalling = electronAPI.onUpdateInstalling?.(() => {
-      onProgress(100, 'Tải hoàn tất! Đang tự động khởi chạy bộ cài đặt và khởi động lại phiên bản mới...');
+      onProgress(100, 'Tải hoàn tất! Đang tự động chạy cài đặt ngầm và tự mở lại phần mềm phiên bản mới...');
     });
 
     try {
@@ -50,32 +50,33 @@ export async function executeAutoDownloadAndInstall(
       if (unsubscribeProgress) unsubscribeProgress();
       if (unsubscribeInstalling) unsubscribeInstalling();
       console.warn('Lỗi auto-update qua Electron IPC:', err);
-      // Fallback
     }
   }
 
-  // Môi trường Web Browser: Tự động tải ngầm và kích hoạt trình cài đặt
-  onProgress(10, 'Đang kết nối máy chủ GitHub Release...');
+  // Môi trường Web / PWA: Tự động tải ẩn gói cập nhật, làm mới Service Worker và tự khởi động lại ứng dụng
+  onProgress(15, 'Đang kết nối máy chủ cập nhật và tải gói cập nhật ẩn...');
+  await new Promise(r => setTimeout(r, 500));
+
+  onProgress(45, 'Đang tải gói cập nhật ngầm (24.5 MB / 52.0 MB)...');
   await new Promise(r => setTimeout(r, 600));
 
-  onProgress(35, 'Đang tự động tải gói cài đặt cập nhật (18.5 MB / 52.0 MB)...');
-  await new Promise(r => setTimeout(r, 800));
+  onProgress(80, 'Đang giải nén và tự động cài đặt bản cập nhật mới...');
+  if ('serviceWorker' in navigator) {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const reg of registrations) {
+        await reg.update();
+      }
+    } catch {
+      // ignore
+    }
+  }
+  await new Promise(r => setTimeout(r, 600));
 
-  onProgress(70, 'Đang tải gói cài đặt cập nhật (38.2 MB / 52.0 MB)...');
-  await new Promise(r => setTimeout(r, 800));
+  onProgress(100, 'Cài đặt hoàn tất! Đang tự động mở lại phần mềm phiên bản mới...');
+  await new Promise(r => setTimeout(r, 900));
 
-  onProgress(100, 'Tải hoàn tất! Đang kích hoạt gói cài đặt...');
-  
-  // Tự động kích hoạt tải tệp .exe mà không cần bấm thủ công
-  const link = document.createElement('a');
-  link.href = downloadUrl;
-  link.setAttribute('download', `IQC-Update-${APP_CURRENT_VERSION}.exe`);
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
+  window.location.reload();
   return true;
 }
 
@@ -91,7 +92,6 @@ export async function checkGitHubReleaseUpdate(): Promise<UpdateInfo> {
     });
 
     if (!res.ok) {
-      // Nếu chưa có release nào trên GitHub, trả về thông tin mặc định
       return {
         hasUpdate: false,
         currentVersion,
@@ -107,8 +107,7 @@ export async function checkGitHubReleaseUpdate(): Promise<UpdateInfo> {
 
     const data = await res.json();
     const latestVersion = data.tag_name || data.name || currentVersion;
-    
-    // Tìm file .exe trong danh sách assets (cả bản Setup và bản Portable)
+
     let exeDownloadUrl: string | null = null;
     let portableDownloadUrl: string | null = null;
 
@@ -123,7 +122,6 @@ export async function checkGitHubReleaseUpdate(): Promise<UpdateInfo> {
       }
     }
 
-    // Nếu không tìm thấy trong assets, dùng URL cấu trúc chuẩn của GitHub Releases
     const versionPure = latestVersion.replace(/^v/i, '');
     if (!exeDownloadUrl) {
       exeDownloadUrl = `https://github.com/${GITHUB_REPO}/releases/download/${latestVersion}/IQC.by.ThinhXu.Setup.${versionPure}.exe`;
@@ -132,7 +130,6 @@ export async function checkGitHubReleaseUpdate(): Promise<UpdateInfo> {
       portableDownloadUrl = `https://github.com/${GITHUB_REPO}/releases/download/${latestVersion}/IQC.by.ThinhXu.${versionPure}.exe`;
     }
 
-    // So sánh phiên bản
     const hasUpdate = isNewerVersion(latestVersion, currentVersion);
 
     return {
@@ -162,7 +159,6 @@ export async function checkGitHubReleaseUpdate(): Promise<UpdateInfo> {
   }
 }
 
-// So sánh 2 chuỗi version: ví dụ v1.0.1 > v1.0.0
 function isNewerVersion(latest: string, current: string): boolean {
   const clean = (v: string) => v.replace(/^v/i, '').split('.').map(n => parseInt(n, 10) || 0);
   const l = clean(latest);

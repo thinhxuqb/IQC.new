@@ -263,11 +263,11 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
           <div className="flex items-center gap-2">
             <Sliders className="w-5 h-5 text-indigo-700" />
             <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-              Quản Trị Danh Mục & Map Kiểm Chuẩn ISO 15189
+              Quản Trị Danh Mục & Map Kiểm Chuẩn QC
             </h2>
           </div>
           <p className="text-xs text-slate-500 mt-1 max-w-3xl">
-            Quy trình chuẩn hóa 4 bước độc lập: <strong>1. Thiết Bị</strong> $\rightarrow$ <strong>2. Xét Nghiệm</strong> $\rightarrow$ <strong>3. Vật Liệu QC</strong> (1 vật liệu dùng chung nhiều xét nghiệm) $\rightarrow$ <strong>4. Map Kiểm Chuẩn</strong> & cài đặt Mean/SD từng mức có lưu vết ISO 15189.
+            Quy trình chuẩn hóa 4 bước độc lập: <strong>1. Thiết Bị</strong> $\rightarrow$ <strong>2. Xét Nghiệm</strong> $\rightarrow$ <strong>3. Vật Liệu QC</strong> (1 vật liệu dùng chung nhiều xét nghiệm) $\rightarrow$ <strong>4. Map Kiểm Chuẩn</strong> & cài đặt Mean/SD từng mức có lưu vết quản lý chất lượng.
           </p>
         </div>
 
@@ -360,20 +360,20 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
         </div>
       </div>
 
-      {/* Navigation Sub-Tabs */}
-      <div className="flex border-b border-slate-200 gap-2 overflow-x-auto">
+      {/* Navigation Sub-Tabs: Fits horizontally without scrolling */}
+      <div className="flex flex-wrap border-b border-slate-200 gap-1 sm:gap-1.5 overflow-x-hidden">
         {/* Bước 1: Thiết Bị */}
         <button
           onClick={() => setActiveTab('instruments')}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`px-3 py-2 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
             activeTab === 'instruments'
               ? 'border-indigo-700 text-indigo-900 bg-indigo-50/60 rounded-t-lg'
               : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg'
           }`}
         >
-          <Server className="w-4 h-4 text-slate-600" />
+          <Server className="w-3.5 h-3.5 text-slate-600" />
           <span>1. Thiết Bị</span>
-          <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-800">
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-800">
             {instruments.length}
           </span>
         </button>
@@ -381,31 +381,31 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
         {/* Bước 2: Xét Nghiệm */}
         <button
           onClick={() => setActiveTab('assays')}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`px-3 py-2 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
             activeTab === 'assays'
               ? 'border-indigo-700 text-indigo-900 bg-indigo-50/60 rounded-t-lg'
               : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg'
           }`}
         >
-          <TestTube className="w-4 h-4 text-slate-600" />
+          <TestTube className="w-3.5 h-3.5 text-slate-600" />
           <span>2. Xét Nghiệm</span>
-          <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-800">
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-800">
             {assays.length}
           </span>
         </button>
 
-        {/* Bước 3: Vật Liệu QC (Độc lập, 1 vật liệu dùng nhiều xét nghiệm) */}
+        {/* Bước 3: Vật Liệu QC */}
         <button
           onClick={() => setActiveTab('materials')}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`px-3 py-2 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
             activeTab === 'materials'
               ? 'border-teal-600 text-teal-900 bg-teal-50/70 rounded-t-lg'
               : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg'
           }`}
         >
-          <Layers className="w-4 h-4 text-teal-600" />
-          <span>3. Vật Liệu QC (Mẫu Kiểm Chuẩn)</span>
-          <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-teal-100 text-teal-800 font-bold">
+          <Layers className="w-3.5 h-3.5 text-teal-600" />
+          <span>3. Vật Liệu QC</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-teal-100 text-teal-800 font-bold">
             {materials.length}
           </span>
         </button>
@@ -413,15 +413,15 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
         {/* Bước 4: Map Kiểm Chuẩn & Mean/SD */}
         <button
           onClick={() => setActiveTab('mappings')}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`px-3 py-2 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
             activeTab === 'mappings'
               ? 'border-indigo-700 text-indigo-900 bg-indigo-50/80 rounded-t-lg shadow-inner'
               : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg'
           }`}
         >
-          <Network className="w-4 h-4 text-indigo-600" />
-          <span className="font-extrabold">4. Map Kiểm Chuẩn & Giá Trị Từng Mức</span>
-          <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-200 text-indigo-900 font-bold">
+          <Network className="w-3.5 h-3.5 text-indigo-600" />
+          <span className="font-extrabold">4. Map Kiểm Chuẩn</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-200 text-indigo-900 font-bold">
             {qcMappings.length}
           </span>
         </button>
@@ -429,15 +429,15 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
         {/* Sổ lưu vết */}
         <button
           onClick={() => setActiveTab('audit')}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`px-3 py-2 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
             activeTab === 'audit'
               ? 'border-indigo-700 text-indigo-900 bg-indigo-50/60 rounded-t-lg'
               : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg'
           }`}
         >
-          <History className="w-4 h-4 text-amber-600" />
-          <span>Lưu Vết Mean/SD (ISO 15189)</span>
-          <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800 font-bold">
+          <History className="w-3.5 h-3.5 text-amber-600" />
+          <span>Lưu Vết Mean/SD</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800 font-bold">
             {meanSdAuditHistory.length}
           </span>
         </button>
@@ -445,15 +445,15 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
         {/* Quản lý người dùng */}
         <button
           onClick={() => setActiveTab('users')}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`px-3 py-2 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
             activeTab === 'users'
               ? 'border-indigo-700 text-indigo-900 bg-indigo-50/60 rounded-t-lg'
               : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg'
           }`}
         >
-          <Users className="w-4 h-4 text-indigo-600" />
-          <span>Người Dùng & Phân Quyền</span>
-          <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-800">
+          <Users className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Người Dùng</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-800">
             {users.length}
           </span>
         </button>
@@ -461,17 +461,14 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
         {/* Thông tin phòng xét nghiệm */}
         <button
           onClick={() => setActiveTab('labInfo')}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`px-3 py-2 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
             activeTab === 'labInfo'
               ? 'border-indigo-700 text-indigo-900 bg-indigo-50/80 rounded-t-lg shadow-inner'
               : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg'
           }`}
         >
-          <Building2 className="w-4 h-4 text-indigo-600" />
-          <span>Thông Tin Phòng Xét Nghiệm</span>
-          <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-100 text-indigo-800 font-bold">
-            ISO
-          </span>
+          <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Thông Tin Phòng XN</span>
         </button>
       </div>
 
@@ -491,7 +488,7 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
                   Ghép Nối Thiết Bị × Xét Nghiệm × Vật Liệu QC & Cài Đặt Mean/SD Từng Mức
                 </h4>
                 <p className="text-slate-600 mt-0.5">
-                  1 Vật liệu QC (ví dụ Lô Bio-Rad Lyphochek Chemistry) được map cho nhiều xét nghiệm (Glucose, Urea, Creatinine, Men gan...). Tại mỗi xét nghiệm, bạn cài đặt Mean và SD mục tiêu cho từng mức nồng độ. Sửa Mean/SD có lưu vết ISO 15189 bắt buộc nhập lý do và người duyệt.
+                  1 Vật liệu QC (ví dụ Lô Bio-Rad Lyphochek Chemistry) được map cho nhiều xét nghiệm (Glucose, Urea, Creatinine, Men gan...). Tại mỗi xét nghiệm, bạn cài đặt Mean và SD mục tiêu (hỗ trợ 2 số thập phân) cho từng mức nồng độ. Sửa Mean/SD có lưu vết bắt buộc nhập lý do và người duyệt.
                 </p>
               </div>
             </div>
@@ -621,20 +618,20 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
                                     {lvl.levelName}:
                                   </span>
                                   <span className="text-xs font-mono font-bold text-slate-900">
-                                    Mean = {lvl.targetMean}
+                                    Mean = {Number(lvl.targetMean).toFixed(2)}
                                   </span>
                                   <span className="text-[11px] font-mono text-slate-600">
-                                    ± {lvl.targetSD}
+                                    ± {Number(lvl.targetSD).toFixed(2)}
                                   </span>
                                   <span className="text-[10px] font-mono font-semibold px-1 rounded bg-slate-200 text-slate-700">
-                                    CV {lvl.targetCV}%
+                                    CV {Number(lvl.targetCV).toFixed(2)}%
                                   </span>
                                 </div>
 
                                 <button
                                   onClick={() => handleOpenEditMeanSdForLevel(mapping, lvl)}
                                   className="text-[11px] text-indigo-700 hover:text-indigo-900 font-bold hover:underline px-1.5 py-0.5 rounded hover:bg-indigo-50 cursor-pointer flex items-center gap-1"
-                                  title="Sửa Mean & SD có lưu vết ISO 15189"
+                                  title="Sửa Mean & SD (cho phép 2 số thập phân)"
                                 >
                                   <Edit3 className="w-3 h-3" />
                                   <span>Sửa Mean/SD</span>
@@ -1005,7 +1002,7 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
       )}
 
       {/* ======================================================== */}
-      {/* TAB 5: LƯU VẾT MEAN/SD (ISO 15189)                        */}
+      {/* TAB 5: LƯU VẾT MEAN/SD                                   */}
       {/* ======================================================== */}
       {activeTab === 'audit' && (
         <div className="space-y-4">
@@ -1013,7 +1010,7 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
             <History className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
             <div className="text-xs text-amber-950">
               <h4 className="font-bold text-sm">
-                Sổ Lưu Vết Lịch Sử Thay Đổi Mean & SD (Audit Trail - ISO 15189 Mục 7.3.7)
+                Sổ Lưu Vết Lịch Sử Thay Đổi Mean & SD (Audit Trail)
               </h4>
               <p className="mt-0.5 text-slate-600">
                 Toàn bộ các lần thay đổi giá trị Mean và SD mục tiêu đều được hệ thống ghi nhận tự động bất biến, kèm danh mục nguyên nhân, người thay đổi và người phê duyệt chuyên môn.
@@ -1256,7 +1253,7 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
               </div>
             </div>
 
-            {/* Card 3: Nhân Sự Phê Duyệt ISO 15189 */}
+            {/* Card 3: Nhân Sự Phê Duyệt Hồ Sơ */}
             <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
@@ -1319,7 +1316,7 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-600" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                  Xem Trước Mẫu Tiêu Đề Báo Cáo In / Xuất PDF (ISO 15189)
+                  Xem Trước Mẫu Tiêu Đề Báo Cáo In / Xuất PDF
                 </h4>
               </div>
               <button
@@ -1387,7 +1384,7 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
                   </div>
                   <div>
                     <p className="font-bold text-slate-900">{labInfo.technicalSupervisor}</p>
-                    <p className="text-[10px] text-slate-500 font-mono">QLCL-ISO15189</p>
+                    <p className="text-[10px] text-slate-500 font-mono">QLCL-QC</p>
                   </div>
                 </div>
 
@@ -1429,7 +1426,7 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
         materials={materials}
       />
 
-      {/* Modal Sửa Mean/SD ISO 15189 */}
+      {/* Modal Sửa Mean/SD */}
       {editingLotForMeanSd && (
         <EditMeanSdModal
           isOpen={true}

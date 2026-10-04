@@ -21,11 +21,11 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
   currentUser,
   onSave,
 }) => {
-  const [newMean, setNewMean] = useState<number>(lot.targetMean);
-  const [newSD, setNewSD] = useState<number>(lot.targetSD);
+  const [newMeanStr, setNewMeanStr] = useState<string>(Number(lot.targetMean).toFixed(2));
+  const [newSDStr, setNewSDStr] = useState<string>(Number(lot.targetSD).toFixed(2));
   const [reasonCategory, setReasonCategory] = useState<MeanSdAuditRecord['reasonCategory']>('CUMULATIVE_MEAN_20');
   const [reason, setReason] = useState<string>(
-    'Tính toán lại Mean thực tế tích lũy sau 20 ngày chạy QC đầu kỳ theo ISO 15189 (Mục 7.3.7)'
+    'Tính toán lại Mean thực tế tích lũy sau 20 ngày chạy QC đầu kỳ'
   );
   const [approvedBy, setApprovedBy] = useState<string>(
     currentUser.role === 'director' ? currentUser.name : 'TS. BS. Nguyễn Văn Hùng'
@@ -35,10 +35,10 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
 
   useEffect(() => {
     if (lot) {
-      setNewMean(lot.targetMean);
-      setNewSD(lot.targetSD);
+      setNewMeanStr(Number(lot.targetMean).toFixed(2));
+      setNewSDStr(Number(lot.targetSD).toFixed(2));
       setReasonCategory('CUMULATIVE_MEAN_20');
-      setReason('Tính toán lại Mean thực tế tích lũy sau 20 ngày chạy QC đầu kỳ theo ISO 15189 (Mục 7.3.7)');
+      setReason('Tính toán lại Mean thực tế tích lũy sau 20 ngày chạy QC đầu kỳ');
       setApprovedBy(currentUser.role === 'director' ? currentUser.name : 'TS. BS. Nguyễn Văn Hùng');
       setNotes('');
       setErrorMsg('');
@@ -46,6 +46,9 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
   }, [lot, isOpen, currentUser]);
 
   if (!isOpen) return null;
+
+  const newMean = parseFloat(newMeanStr) || 0;
+  const newSD = parseFloat(newSDStr) || 0;
 
   // Tính CV% mới = (SD / Mean) * 100
   const calculatedNewCV = newMean > 0 && newSD > 0 ? (newSD / newMean) * 100 : 0;
@@ -60,7 +63,7 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
     setReasonCategory(cat);
     switch (cat) {
       case 'CUMULATIVE_MEAN_20':
-        setReason('Tính toán lại Mean thực tế tích lũy sau 20 ngày chạy QC đầu kỳ theo ISO 15189 (Mục 7.3.7)');
+        setReason('Tính toán lại Mean thực tế tích lũy sau 20 ngày chạy QC đầu kỳ');
         break;
       case 'NEW_REAGENT_LOT':
         setReason('Chuyển đổi sang Lô hóa chất xét nghiệm mới (New Reagent Lot) của nhà sản xuất');
@@ -81,18 +84,25 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
     e.preventDefault();
     setErrorMsg('');
 
-    if (newMean <= 0 || isNaN(newMean)) {
-      setErrorMsg('Vui lòng nhập giá trị Mean hợp lệ (> 0).');
+    const parsedMean = parseFloat(newMeanStr);
+    const parsedSD = parseFloat(newSDStr);
+
+    if (isNaN(parsedMean) || parsedMean <= 0) {
+      setErrorMsg('Vui lòng nhập giá trị Mean hợp lệ (> 0, cho phép 2 số thập phân).');
       return;
     }
-    if (newSD <= 0 || isNaN(newSD)) {
-      setErrorMsg('Vui lòng nhập giá trị SD hợp lệ (> 0).');
+    if (isNaN(parsedSD) || parsedSD <= 0) {
+      setErrorMsg('Vui lòng nhập giá trị SD hợp lệ (> 0, cho phép 2 số thập phân).');
       return;
     }
     if (!reason.trim()) {
-      setErrorMsg('Theo tiêu chuẩn ISO 15189, bạn bắt buộc phải ghi rõ lý do hiệu chỉnh Mean & SD.');
+      setErrorMsg('Bạn bắt buộc phải ghi rõ lý do hiệu chỉnh Mean & SD.');
       return;
     }
+
+    const finalMean = Number(parsedMean.toFixed(2));
+    const finalSD = Number(parsedSD.toFixed(2));
+    const finalCV = Number(((finalSD / finalMean) * 100).toFixed(2));
 
     const auditRecord: MeanSdAuditRecord = {
       id: `msd_audit_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
@@ -106,12 +116,12 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
       timestamp: new Date().toISOString(),
       changedBy: currentUser.name,
       changedByRole: currentUser.roleTitle,
-      oldMean: lot.targetMean,
-      newMean: Number(newMean.toFixed(assay?.decimalPlaces ? assay.decimalPlaces + 2 : 3)),
-      oldSD: lot.targetSD,
-      newSD: Number(newSD.toFixed(assay?.decimalPlaces ? assay.decimalPlaces + 2 : 4)),
+      oldMean: Number(lot.targetMean.toFixed(2)),
+      newMean: finalMean,
+      oldSD: Number(lot.targetSD.toFixed(2)),
+      newSD: finalSD,
       oldCV: Number(oldCV.toFixed(2)),
-      newCV: Number(calculatedNewCV.toFixed(2)),
+      newCV: finalCV,
       reason: reason.trim(),
       reasonCategory,
       approvedBy: approvedBy.trim() || undefined,
@@ -120,9 +130,9 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
 
     const updatedLot: QCLot = {
       ...lot,
-      targetMean: auditRecord.newMean,
-      targetSD: auditRecord.newSD,
-      targetCV: auditRecord.newCV,
+      targetMean: finalMean,
+      targetSD: finalSD,
+      targetCV: finalCV,
       history: [auditRecord, ...(lot.history || [])],
     };
 
@@ -141,16 +151,16 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
             </div>
             <div>
               <h3 className="text-sm font-bold tracking-wide">
-                Hiệu Chỉnh Mean & SD (Lưu Vết ISO 15189)
+                Hiệu Chỉnh Mean & SD (Hỗ Trợ 2 Số Thập Phân)
               </h3>
               <p className="text-xs text-slate-300">
-                Ghi nhận nhật ký kiểm toán bắt buộc khi thay đổi thông số kiểm chuẩn
+                Ghi nhận nhật ký kiểm toán khi thay đổi thông số kiểm chuẩn
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors p-1 rounded-md hover:bg-slate-800"
+            className="text-slate-400 hover:text-white transition-colors p-1 rounded-md hover:bg-slate-800 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -187,7 +197,7 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
           {/* Bảng so sánh Giá trị cũ vs Giá trị mới */}
           <div className="border border-slate-200 rounded-lg overflow-hidden">
             <div className="bg-slate-100 px-4 py-2 border-b border-slate-200 text-xs font-bold text-slate-800 flex items-center justify-between">
-              <span>BẢNG ĐIỀU CHỈNH GIÁ TRỊ KIỂM CHUẨN</span>
+              <span>BẢNG ĐIỀU CHỈNH GIÁ TRỊ KIỂM CHUẨN (2 SỐ THẬP PHÂN)</span>
               <span className="text-[11px] font-normal text-slate-600">Đơn vị: {assay?.unit || 'mg/dL'}</span>
             </div>
 
@@ -199,11 +209,11 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
                 </span>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-600">Mean cũ:</span>
-                  <span className="font-mono font-bold text-slate-800">{lot.targetMean}</span>
+                  <span className="font-mono font-bold text-slate-800">{Number(lot.targetMean).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-600">SD cũ (1s):</span>
-                  <span className="font-mono font-bold text-slate-800">±{lot.targetSD}</span>
+                  <span className="font-mono font-bold text-slate-800">±{Number(lot.targetSD).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-600">Hệ số biến thiên CV%:</span>
@@ -226,13 +236,14 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
 
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Giá trị Mean mới (*):
+                    Giá trị Mean mới (Cho phép 2 số thập phân) (*):
                   </label>
                   <input
                     type="number"
-                    step="any"
-                    value={newMean}
-                    onChange={(e) => setNewMean(parseFloat(e.target.value) || 0)}
+                    step="0.01"
+                    value={newMeanStr}
+                    onChange={(e) => setNewMeanStr(e.target.value)}
+                    placeholder="VD: 5.35"
                     required
                     className="w-full px-2.5 py-1.5 text-xs font-mono font-bold border border-cyan-300 rounded focus:ring-1 focus:ring-cyan-500 focus:outline-none bg-white text-slate-900"
                   />
@@ -240,13 +251,14 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
 
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Độ lệch chuẩn SD mới (*):
+                    Độ lệch chuẩn SD mới (Cho phép 2 số thập phân) (*):
                   </label>
                   <input
                     type="number"
-                    step="any"
-                    value={newSD}
-                    onChange={(e) => setNewSD(parseFloat(e.target.value) || 0)}
+                    step="0.01"
+                    value={newSDStr}
+                    onChange={(e) => setNewSDStr(e.target.value)}
+                    placeholder="VD: 0.16"
                     required
                     className="w-full px-2.5 py-1.5 text-xs font-mono font-bold border border-cyan-300 rounded focus:ring-1 focus:ring-cyan-500 focus:outline-none bg-white text-slate-900"
                   />
@@ -271,11 +283,11 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
             </div>
           </div>
 
-          {/* Phần Lưu Vết Bắt Buộc Chuẩn ISO 15189 */}
+          {/* Phần Lưu Vết Bắt Buộc */}
           <div className="border-t border-slate-200 pt-4 space-y-3">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
               <ShieldAlert className="w-4 h-4 text-cyan-700" />
-              <span>THÔNG TIN LƯU VẾT THEO QUY TRÌNH ISO 15189 (BẮT BUỘC)</span>
+              <span>THÔNG TIN LƯU VẾT HỒ SƠ CHẤT LƯỢNG (BẮT BUỘC)</span>
             </div>
 
             <div>
@@ -288,7 +300,7 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
                 className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-cyan-500 focus:outline-none bg-white text-slate-900"
               >
                 <option value="CUMULATIVE_MEAN_20">
-                  1. Tính lại Mean thực tế sau 20-30 điểm QC đầu kỳ (ISO 15189 Mục 7.3.7)
+                  1. Tính lại Mean thực tế sau 20-30 điểm QC đầu kỳ
                 </option>
                 <option value="NEW_REAGENT_LOT">
                   2. Chuyển đổi Lô hóa chất xét nghiệm mới (New Reagent Lot)
@@ -365,13 +377,13 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-xs font-semibold text-white bg-cyan-700 hover:bg-cyan-800 rounded-md transition-colors flex items-center gap-1.5 shadow-sm"
+              className="px-4 py-2 text-xs font-semibold text-white bg-cyan-700 hover:bg-cyan-800 rounded-md transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Check className="w-4 h-4" />
               Lưu Hiệu Chỉnh & Tạo Lưu Vết

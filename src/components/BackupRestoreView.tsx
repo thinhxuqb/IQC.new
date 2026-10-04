@@ -43,7 +43,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `LAB_QC_BACKUP_ISO15189_${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `LAB_QC_BACKUP_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -159,7 +159,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
           </div>
 
           <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] text-emerald-700 font-medium">
-            ✓ Mã hóa toàn vẹn dữ liệu chuẩn y khoa ISO 15189
+            ✓ Mã hóa toàn vẹn dữ liệu chuẩn y khoa
           </div>
         </div>
 
@@ -222,13 +222,13 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
         </div>
       )}
 
-      {/* ISO 15189 Audit Trail Register */}
+      {/* Audit Trail Register */}
       <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-slate-700" />
             <h3 className="font-bold text-sm text-slate-900">
-              Nhật Ký Kiểm Toán Toàn Vẹn Dữ Liệu (ISO 15189 Audit Trail)
+              Nhật Ký Kiểm Toán Toàn Vẹn Dữ Liệu (Audit Trail)
             </h3>
           </div>
           <input

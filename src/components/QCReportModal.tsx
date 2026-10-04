@@ -170,11 +170,94 @@ export const QCReportModal: React.FC<QCReportModalProps> = ({
   }, [filteredResults]);
 
   const handlePrint = () => {
-    window.print();
+    const printElement = document.getElementById('qc-printable-report');
+    if (!printElement) {
+      window.print();
+      return;
+    }
+
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      return;
+    }
+
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map((el) => el.outerHTML)
+      .join('\n');
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html lang="vi">
+        <head>
+          <meta charset="UTF-8" />
+          <title>Bao_Cao_QC_${currentAssay?.code || 'LAB'}_${new Date().toISOString().slice(0, 10)}</title>
+          ${styles}
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 10mm 12mm 12mm 12mm;
+            }
+            html, body {
+              background: #ffffff !important;
+              color: #0f172a !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              height: auto !important;
+              overflow: visible !important;
+              font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            .print-report-wrapper {
+              width: 100% !important;
+              max-width: 100% !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: visible !important;
+            }
+            .print-break-inside-avoid {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+            }
+            table { page-break-inside: auto; width: 100%; border-collapse: collapse; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+          </style>
+        </head>
+        <body>
+          <div class="print-report-wrapper">
+            ${printElement.innerHTML}
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 2000);
+    }, 350);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto print-modal-active">
       <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden my-auto max-h-[95vh] flex flex-col">
         {/* Top Control Bar (Hidden on print) */}
         <div className="px-6 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50 no-print">
@@ -182,10 +265,10 @@ export const QCReportModal: React.FC<QCReportModalProps> = ({
             <FileText className="w-5 h-5 text-slate-700" />
             <div>
               <h3 className="text-sm font-bold text-slate-900">
-                Báo Cáo Tổng Hợp & Đánh Giá Nội Kiểm Định Kỳ (ISO 15189)
+                Báo Cáo Tổng Hợp & Đánh Giá Nội Kiểm Định Kỳ
               </h3>
               <p className="text-[11px] text-slate-500">
-                Xuất file PDF báo cáo tháng phục vụ thẩm định chất lượng và lưu trữ
+                Xuất file PDF báo cáo tháng đầy đủ Header & Footer phục vụ thẩm định chất lượng và lưu trữ
               </p>
             </div>
           </div>
@@ -318,7 +401,7 @@ export const QCReportModal: React.FC<QCReportModalProps> = ({
         {/* Printable Report Document Body */}
         <div className="p-8 overflow-y-auto flex-1 bg-white text-slate-900 print-container" id="qc-printable-report">
           {/* Header Phòng Xét Nghiệm Chuẩn Y Tế */}
-          <div className="border-b-2 border-slate-900 pb-4 mb-6">
+          <div className="border-b-2 border-slate-900 pb-4 mb-6 print-break-inside-avoid">
             <div className="flex justify-between items-start">
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
@@ -410,19 +493,19 @@ export const QCReportModal: React.FC<QCReportModalProps> = ({
                 <tr>
                   <td className="p-2 font-sans font-medium border-r border-slate-300">Mean Mục Tiêu vs Thực Tế</td>
                   <td className="p-2 text-center border-r border-slate-300">
-                    {lotL1?.targetMean} vs <strong className="text-slate-900">{statsL1?.calculatedMean || '-'}</strong>
+                    {lotL1 ? Number(lotL1.targetMean).toFixed(2) : '-'} vs <strong className="text-slate-900">{statsL1 ? Number(statsL1.calculatedMean).toFixed(2) : '-'}</strong>
                   </td>
                   <td className="p-2 text-center">
-                    {lotL2?.targetMean} vs <strong className="text-slate-900">{statsL2?.calculatedMean || '-'}</strong>
+                    {lotL2 ? Number(lotL2.targetMean).toFixed(2) : '-'} vs <strong className="text-slate-900">{statsL2 ? Number(statsL2.calculatedMean).toFixed(2) : '-'}</strong>
                   </td>
                 </tr>
                 <tr>
                   <td className="p-2 font-sans font-medium border-r border-slate-300">Độ lệch chuẩn SD (Target vs Actual)</td>
                   <td className="p-2 text-center border-r border-slate-300">
-                    ±{lotL1?.targetSD} vs <strong>±{statsL1?.calculatedSD || '-'}</strong>
+                    ±{lotL1 ? Number(lotL1.targetSD).toFixed(2) : '-'} vs <strong>±{statsL1 ? Number(statsL1.calculatedSD).toFixed(2) : '-'}</strong>
                   </td>
                   <td className="p-2 text-center">
-                    ±{lotL2?.targetSD} vs <strong>±{statsL2?.calculatedSD || '-'}</strong>
+                    ±{lotL2 ? Number(lotL2.targetSD).toFixed(2) : '-'} vs <strong>±{statsL2 ? Number(statsL2.calculatedSD).toFixed(2) : '-'}</strong>
                   </td>
                 </tr>
                 <tr>
@@ -676,39 +759,48 @@ export const QCReportModal: React.FC<QCReportModalProps> = ({
             )}
           </div>
 
-          {/* Phần Ký Duyệt Chuẩn ISO 15189 (3 Chữ Ký) */}
-          <div className="pt-6 border-t border-slate-300 grid grid-cols-3 gap-6 text-center text-xs print-break-inside-avoid">
-            <div className="space-y-16">
-              <div>
-                <p className="font-bold text-slate-900 uppercase">Kỹ Thuật Viên Thực Hiện</p>
-                <p className="text-[10px] text-slate-500">(Ký và ghi rõ họ tên)</p>
+          {/* Phần Ký Duyệt Báo Cáo (3 Chữ Ký) & Footer */}
+          <div className="pt-6 border-t-2 border-slate-900 mt-6 print-break-inside-avoid">
+            <div className="grid grid-cols-3 gap-6 text-center text-xs">
+              <div className="space-y-16">
+                <div>
+                  <p className="font-bold text-slate-900 uppercase">Kỹ Thuật Viên Thực Hiện</p>
+                  <p className="text-[10px] text-slate-500">(Ký và ghi rõ họ tên)</p>
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900">{currentUser.name || 'CN. Trần Quốc Tuấn'}</p>
+                  <p className="text-[10px] text-slate-500 font-mono">{currentUser.code || 'KTV-082'}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-slate-900">{currentUser.name || 'CN. Trần Quốc Tuấn'}</p>
-                <p className="text-[10px] text-slate-500 font-mono">{currentUser.code || 'KTV-082'}</p>
+
+              <div className="space-y-16">
+                <div>
+                  <p className="font-bold text-slate-900 uppercase">Phụ Trách Quản Lý QC</p>
+                  <p className="text-[10px] text-slate-500">({currentLabInfo.supervisorTitle || 'Ký và ghi rõ họ tên'})</p>
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900">{currentLabInfo.technicalSupervisor}</p>
+                  <p className="text-[10px] text-slate-500 font-mono">QLCL-QC</p>
+                </div>
+              </div>
+
+              <div className="space-y-16">
+                <div>
+                  <p className="font-bold text-slate-900 uppercase">Trưởng Khoa Xét Nghiệm</p>
+                  <p className="text-[10px] text-slate-500">({currentLabInfo.headTitle || 'Phê duyệt & Đóng dấu'})</p>
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900">{currentLabInfo.headOfDepartment}</p>
+                  <p className="text-[10px] text-slate-500 font-mono">{currentLabInfo.labCode}</p>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-16">
-              <div>
-                <p className="font-bold text-slate-900 uppercase">Phụ Trách Quản Lý QC</p>
-                <p className="text-[10px] text-slate-500">({currentLabInfo.supervisorTitle || 'Ký và ghi rõ họ tên'})</p>
-              </div>
-              <div>
-                <p className="font-bold text-slate-900">{currentLabInfo.technicalSupervisor}</p>
-                <p className="text-[10px] text-slate-500 font-mono">QLCL-ISO15189</p>
-              </div>
-            </div>
-
-            <div className="space-y-16">
-              <div>
-                <p className="font-bold text-slate-900 uppercase">Trưởng Khoa Xét Nghiệm</p>
-                <p className="text-[10px] text-slate-500">({currentLabInfo.headTitle || 'Phê duyệt & Đóng dấu'})</p>
-              </div>
-              <div>
-                <p className="font-bold text-slate-900">{currentLabInfo.headOfDepartment}</p>
-                <p className="text-[10px] text-slate-500 font-mono">{currentLabInfo.labCode}</p>
-              </div>
+            {/* Footer chân trang báo cáo */}
+            <div className="mt-8 pt-3 border-t border-slate-300 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+              <span>{currentLabInfo.hospitalName} · {currentLabInfo.name}</span>
+              <span>Biểu mẫu: {currentLabInfo.documentCodePrefix}-{currentAssay?.code || 'LAB'}-2026</span>
+              <span>Xuất từ hệ thống IQC by ThinhXu · Ngày in: {new Date().toLocaleDateString('vi-VN')}</span>
             </div>
           </div>
         </div>

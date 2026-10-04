@@ -143,7 +143,7 @@ export const MachineSignalReceiver: React.FC<MachineSignalReceiverProps> = ({
     } else {
       addLog(
         'PARSED',
-        `[ĐẠT KIỂM SOÁT] ${targetAssay.name}: ${parsed.value} ${parsed.unit} (SDI: ${z > 0 ? '+' : ''}${z} SD). Đạt chuẩn ISO 15189.`
+        `[ĐẠT KIỂM SOÁT] ${targetAssay.name}: ${parsed.value} ${parsed.unit} (SDI: ${z > 0 ? '+' : ''}${z} SD). Đạt chuẩn kiểm soát chất lượng.`
       );
     }
   };
