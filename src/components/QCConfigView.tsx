@@ -267,7 +267,7 @@ export const QCConfigView: React.FC<QCConfigViewProps> = ({
             </h2>
           </div>
           <p className="text-xs text-slate-500 mt-1 max-w-3xl">
-            Quy trình chuẩn hóa 4 bước độc lập: <strong>1. Thiết Bị</strong> $\rightarrow$ <strong>2. Xét Nghiệm</strong> $\rightarrow$ <strong>3. Vật Liệu QC</strong> (1 vật liệu dùng chung nhiều xét nghiệm) $\rightarrow$ <strong>4. Map Kiểm Chuẩn</strong> & cài đặt Mean/SD từng mức có lưu vết quản lý chất lượng.
+            Quản trị danh mục thiết bị, xét nghiệm, vật liệu nội kiểm và cài đặt Mean/SD kiểm chuẩn chất lượng.
           </p>
         </div>
 

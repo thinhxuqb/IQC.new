@@ -655,7 +655,7 @@ export default function App() {
 
       {/* Instant Westgard Incident Alert Toast */}
       {activeAlert && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full no-print">
+        <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-5 lg:px-6 mt-3 no-print">
           <div className={`p-4 rounded-xl border shadow-md flex items-start justify-between gap-4 animate-in slide-in-from-top-3 ${
             activeAlert.result.status === 'REJECTED'
               ? 'bg-rose-50 border-rose-300 text-rose-950'
@@ -683,7 +683,7 @@ export default function App() {
                       setSelectedResultForCapa(activeAlert.result);
                       setIsCapaModalOpen(true);
                     }}
-                    className="text-xs font-bold bg-slate-900 text-white px-3 py-1 rounded-md hover:bg-slate-800 transition-colors"
+                    className="text-xs font-bold bg-slate-900 text-white px-3 py-1 rounded-md hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Xử lý CAPA ngay
                   </button>
@@ -693,7 +693,7 @@ export default function App() {
                       setCurrentTab('chart');
                       setActiveAlert(null);
                     }}
-                    className="text-xs font-semibold text-slate-700 hover:text-slate-900 underline"
+                    className="text-xs font-semibold text-slate-700 hover:text-slate-900 underline cursor-pointer"
                   >
                     Xem trên biểu đồ L-J
                   </button>
@@ -713,7 +713,7 @@ export default function App() {
 
       {/* Sync Notification Toast */}
       {syncToastMessage && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full no-print">
+        <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-5 lg:px-6 mt-3 no-print">
           <div className="p-4 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-950 shadow-md flex items-center justify-between gap-4 animate-in slide-in-from-top-3">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-emerald-200 text-emerald-800 shrink-0">
@@ -733,9 +733,9 @@ export default function App() {
         </div>
       )}
 
-      {/* Main Content Area (Strict Auth Guard: Yêu cầu đăng nhập mới hiển thị dữ liệu) */}
+      {/* Main Content Area (16:9 Full Màn Hình Máy Tính - Trải rộng tối đa không gian) */}
       {isLoggedIn ? (
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <main className="flex-1 w-full max-w-[1920px] mx-auto px-3 sm:px-5 lg:px-6 py-4">
           {/* Tab 1: Dashboard */}
           {currentTab === 'dashboard' && (
             <DashboardView

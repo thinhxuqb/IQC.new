@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo ============================================================
-echo  TỰ ĐỘNG ĐẨY MÃ NGUỒN VÀ BẢN CẬP NHẬT V1.1.4 LÊN GITHUB
+echo  TỰ ĐỘNG ĐẨY MÃ NGUỒN VÀ BẢN CẬP NHẬT V1.1.5 LÊN GITHUB
 echo ============================================================
 echo.
 
@@ -14,12 +14,12 @@ if "%GITHUB_TOKEN%"=="" (
 )
 
 echo.
-echo Đang tạo commit và tag v1.1.4...
+echo Đang tạo commit và tag v1.1.5...
 git init
 git checkout -B main
 git add -A
-git commit -m "Release v1.1.4: Strict Admin Login/Logout, Dynamic Instruments, TX Logo & Hospital Logo on QC Report" 2>nul
-git tag -f v1.1.4
+git commit -m "Release v1.1.5: Real Dynamic Counters, 16:9 Full Screen, Clean Pro UI, Google Drive Cloud Sync" 2>nul
+git tag -f v1.1.5
 
 echo Đang đồng bộ và đẩy mã nguồn lên https://github.com/thinhxuqb/IQC.new...
 git push -f https://%GITHUB_TOKEN%@github.com/thinhxuqb/IQC.new.git main --tags
@@ -27,8 +27,8 @@ git push -f https://%GITHUB_TOKEN%@github.com/thinhxuqb/IQC.new.git main --tags
 if %errorlevel% equ 0 (
     echo.
     echo ============================================================
-    echo [THÀNH CÔNG] Đã đẩy bản v1.1.4 lên GitHub!
-    echo GitHub Actions đang tự động biên dịch IQC.by.ThinhXu.Setup.1.1.4.exe.
+    echo [THÀNH CÔNG] Đã đẩy bản v1.1.5 lên GitHub!
+    echo GitHub Actions đang tự động biên dịch IQC.by.ThinhXu.Setup.1.1.5.exe.
     echo Bạn có thể theo dõi tiến trình tại: https://github.com/thinhxuqb/IQC.new/actions
     echo ============================================================
 ) else (

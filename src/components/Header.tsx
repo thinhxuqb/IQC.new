@@ -19,7 +19,9 @@ import {
   LogOut,
   LogIn,
   KeyRound,
-  Building2
+  Building2,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -62,6 +64,24 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'reports', label: 'Báo cáo QC', icon: FileText },
     { id: 'backup', label: 'Sao lưu', icon: Database },
   ];
+
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-200 no-print w-full overflow-x-clip">
@@ -148,6 +168,20 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               )}
             </div>
+
+            {/* 16:9 Fullscreen Mode Toggle */}
+            <button
+              onClick={handleToggleFullscreen}
+              className="flex items-center gap-1 p-1.5 sm:px-2 sm:py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold shadow-2xs transition-all cursor-pointer shrink-0"
+              title={isFullscreen ? 'Thu nhỏ cửa sổ' : 'Bật toàn màn hình tỷ lệ 16:9 (Full Screen)'}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-3.5 h-3.5 text-indigo-600" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5 text-slate-600" />
+              )}
+              <span className="hidden xl:inline text-[11px] font-mono">{isFullscreen ? 'Thu nhỏ' : '16:9 Full'}</span>
+            </button>
 
             {/* Manual Check for Updates Button */}
             {onOpenUpdateModal && (

@@ -23,12 +23,18 @@ export const CapaListView: React.FC<CapaListViewProps> = ({
   const [filterInst, setFilterInst] = useState<string>('ALL');
 
   // Lọc các kết quả có sự cố (bị Reject hoặc Warning hoặc đã có CAPA)
-  const incidentResults = results.filter((r) => {
+  const baseIncidents = results.filter((r) => {
     const isIncident = r.status === 'REJECTED' || r.status === 'WARNING' || Boolean(r.capa);
     if (!isIncident) return false;
-
     if (filterInst !== 'ALL' && r.instrumentId !== filterInst) return false;
+    return true;
+  });
 
+  const pendingCount = baseIncidents.filter((r) => !r.capa || r.capa.status === 'PENDING_APPROVAL').length;
+  const resolvedCount = baseIncidents.filter((r) => r.capa?.status === 'RESOLVED').length;
+  const totalIncidentCount = baseIncidents.length;
+
+  const incidentResults = baseIncidents.filter((r) => {
     if (filterStatus === 'PENDING') {
       return !r.capa || r.capa.status === 'PENDING_APPROVAL';
     }
@@ -57,27 +63,27 @@ export const CapaListView: React.FC<CapaListViewProps> = ({
           <div className="flex items-center p-1 bg-slate-100 rounded-lg text-xs">
             <button
               onClick={() => setFilterStatus('ALL')}
-              className={`px-3 py-1 font-medium rounded-md transition-colors ${
-                filterStatus === 'ALL' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600'
+              className={`px-3 py-1 font-medium rounded-md transition-colors cursor-pointer ${
+                filterStatus === 'ALL' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Tất cả ({incidentResults.length})
+              Tất cả ({totalIncidentCount})
             </button>
             <button
               onClick={() => setFilterStatus('PENDING')}
-              className={`px-3 py-1 font-medium rounded-md transition-colors ${
-                filterStatus === 'PENDING' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600'
+              className={`px-3 py-1 font-medium rounded-md transition-colors cursor-pointer ${
+                filterStatus === 'PENDING' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Chờ phê duyệt
+              Chờ phê duyệt ({pendingCount})
             </button>
             <button
               onClick={() => setFilterStatus('RESOLVED')}
-              className={`px-3 py-1 font-medium rounded-md transition-colors ${
-                filterStatus === 'RESOLVED' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600'
+              className={`px-3 py-1 font-medium rounded-md transition-colors cursor-pointer ${
+                filterStatus === 'RESOLVED' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Đã thẩm định
+              Đã thẩm định ({resolvedCount})
             </button>
           </div>
 
@@ -85,12 +91,15 @@ export const CapaListView: React.FC<CapaListViewProps> = ({
           <select
             value={filterInst}
             onChange={(e) => setFilterInst(e.target.value)}
-            className="text-xs bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-medium"
+            className="text-xs bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-medium cursor-pointer"
           >
-            <option value="ALL">Tất cả thiết bị ({instruments.length} máy)</option>
-            {instruments.map((i) => (
-              <option key={i.id} value={i.id}>{i.code} - {i.name}</option>
-            ))}
+            <option value="ALL">Tất cả thiết bị ({instruments.length} máy · {results.filter(r => r.status === 'REJECTED' || r.status === 'WARNING' || Boolean(r.capa)).length} sự cố)</option>
+            {instruments.map((i) => {
+              const instIncidents = results.filter(r => r.instrumentId === i.id && (r.status === 'REJECTED' || r.status === 'WARNING' || Boolean(r.capa))).length;
+              return (
+                <option key={i.id} value={i.id}>{i.code} - {i.name} ({instIncidents} sự cố)</option>
+              );
+            })}
           </select>
         </div>
       </div>

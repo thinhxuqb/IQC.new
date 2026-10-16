@@ -268,7 +268,7 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                 </div>
               </div>
 
-              {/* What's new in v1.1.4 */}
+              {/* What's new in v1.1.5 */}
               <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
                   <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -276,16 +276,19 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                 </div>
                 <ul className="text-[11px] text-emerald-900 space-y-1 list-disc pl-4">
                   <li>
-                    <strong>Quy tắc đăng nhập & đăng xuất nghiêm ngặt:</strong> Chỉ duy nhất tài khoản <code>admin</code> mặc định có toàn quyền (Full Quyền); khóa truy cập hoàn toàn khi đăng xuất.
+                    <strong>Tất cả bộ đếm là dữ liệu thực:</strong> Six Sigma tính toán động từ TEa & kết quả thực tế; đếm chuẩn xác số bản ghi từng máy, số sự cố CAPA chờ ký và tỷ lệ đạt chuẩn.
                   </li>
                   <li>
-                    <strong>Thiết bị đồng bộ theo thực tế khai báo:</strong> Toàn bộ bộ lọc, bảng tổng quan, cổng LIS và báo cáo tự động cập nhật theo danh sách thiết bị khai báo thực tế.
+                    <strong>Màn hình tỷ lệ 16:9 Full màn hình máy tính:</strong> Trải rộng toàn bộ 100% không gian hiển thị trên màn hình máy tính trạm 16:9 (1080p/2K/4K) với nút bật/tắt toàn màn hình tiện lợi.
                   </li>
                   <li>
-                    <strong>Logo App chữ TX & Tải Logo Bệnh Viện lên Báo Cáo:</strong> Thiết kế logo ứng dụng TX tối giản và cho phép tải ảnh Logo bệnh viện hiển thị trực tiếp trên Báo cáo QC A4 (PDF).
+                    <strong>Ẩn các hướng dẫn & gợi ý dư thừa:</strong> Giao diện thao tác tinh gọn, chuyên nghiệp, không vướng víu gợi ý hay hướng dẫn lặp lại.
                   </li>
                   <li>
-                    <strong>Tự động cập nhật ngầm v1.1.4:</strong> Bấm &quot;Đồng Ý Cập Nhật&quot; tự tải ẩn, tự chạy cài đặt và tự mở lại phần mềm phiên bản mới.
+                    <strong>Đồng bộ Google Drive dùng chung nhiều máy:</strong> Lưu trữ và đồng bộ tức thì toàn bộ cơ sở dữ liệu nội kiểm lên Google Drive để chia sẻ dữ liệu liên máy trạm.
+                  </li>
+                  <li>
+                    <strong>Tự động cập nhật ngầm v1.1.5:</strong> Nhận diện và tải ngầm phiên bản 1.1.5 từ GitHub Release chỉ với 1 cú click.
                   </li>
                 </ul>
               </div>

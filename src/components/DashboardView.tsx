@@ -55,17 +55,52 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Thống kê toàn viện
   const totalRuns = results.length;
   const inControlRuns = results.filter((r) => r.status === 'ACCEPTED').length;
+  const rejectedRuns = results.filter((r) => r.status === 'REJECTED').length;
+  const warningRuns = results.filter((r) => r.status === 'WARNING').length;
   const inControlRate = totalRuns > 0 ? ((inControlRuns / totalRuns) * 100).toFixed(1) : '100';
   const pendingCapaCount = results.filter((r) => (r.status === 'REJECTED' || r.status === 'WARNING') && (!r.capa || r.capa.status === 'PENDING_APPROVAL')).length;
+
+  // Tính Six Sigma trung bình thực tế từ toàn bộ dữ liệu nội kiểm
+  const { avgSigma, evaluatedCount } = React.useMemo(() => {
+    let totalSigma = 0;
+    let count = 0;
+
+    assays.forEach((assay) => {
+      const assayResults = results.filter((r) => r.assayId === assay.id);
+      if (assayResults.length === 0) return;
+
+      const assayLots = lots.filter((l) => l.assayId === assay.id);
+      const lot = assayLots.find((l) => l.level === 'level1') || assayLots[0];
+      if (!lot) return;
+
+      const stats = calculateQCStatistics(
+        assayResults.filter((r) => r.level === (lot.level || 'level1')),
+        lot.targetMean,
+        lot.targetSD,
+        lot.targetCV,
+        assay.cliaTeaPercent || 10
+      );
+
+      if (stats && typeof stats.sigmaMetric === 'number' && !isNaN(stats.sigmaMetric)) {
+        totalSigma += Math.max(0, Math.min(stats.sigmaMetric, 6.0));
+        count++;
+      }
+    });
+
+    return {
+      avgSigma: count > 0 ? (totalSigma / count).toFixed(1) : '6.0',
+      evaluatedCount: count,
+    };
+  }, [assays, lots, results]);
 
   const filteredAssays = selectedInstFilter === 'ALL'
     ? assays
     : assays.filter((a) => a.instrumentId === selectedInstFilter);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 w-full">
       {/* Top Clinical Telemetry Ribbon */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Metric 1 */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
@@ -79,7 +114,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
             <span className="truncate">
               {instruments.length > 0
-                ? instruments.map((i) => i.code || i.name).join(' · ')
+                ? instruments.map((i) => `${i.code || i.id} (${results.filter(r => r.instrumentId === i.id).length} KQ)`).join(' · ')
                 : 'Chưa khai báo thiết bị'}
             </span>
           </div>
@@ -108,12 +143,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className={`text-2xl font-bold font-mono ${pendingCapaCount > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
               {pendingCapaCount}
             </span>
-            <span className="text-xs text-slate-500">vụ cần ký duyệt</span>
+            <span className="text-xs text-slate-500">vụ cần ký duyệt ({rejectedRuns} từ chối · {warningRuns} cảnh báo)</span>
           </div>
           <div className="mt-2 text-[11px]">
             <button
               onClick={onOpenCapaList}
-              className="text-cyan-700 hover:text-cyan-900 font-semibold underline flex items-center gap-1"
+              className="text-cyan-700 hover:text-cyan-900 font-semibold underline flex items-center gap-1 cursor-pointer"
             >
               <span>Xem danh sách CAPA</span>
               <ArrowRight className="w-3 h-3" />
@@ -124,26 +159,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Metric 4 */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-            Độ Tin Cậy Hệ Thống (Six Sigma)
+            Độ Tin Cậy Hệ Thống (Six Sigma Thực Tế)
           </span>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono text-indigo-700">5.4σ</span>
-            <span className="text-xs text-slate-500">World Class Quality</span>
+            <span className="text-2xl font-bold font-mono text-indigo-700">{avgSigma}σ</span>
+            <span className="text-xs text-slate-500">
+              {Number(avgSigma) >= 5 ? 'World Class Quality' : Number(avgSigma) >= 4 ? 'Chất lượng cao' : 'Tiêu chuẩn kiểm soát'}
+            </span>
           </div>
           <div className="mt-2 text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Đạt tiêu chuẩn TEa / CLIA 2026</span>
+            <span>Tính thực từ {evaluatedCount} xét nghiệm (TEa / CLIA)</span>
           </div>
         </div>
       </div>
 
-      {/* Quick Action Bar */}
-      <div className="bg-slate-900 text-white p-4 rounded-xl shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h4 className="text-sm font-bold">Thao Tác Nhanh Quản Lý Nội Kiểm (IQC)</h4>
-          <p className="text-xs text-slate-300 mt-0.5">
-            Phục vụ tiếp nhận mẫu đầu ca, kiểm tra vi phạm Westgard và xuất báo cáo lưu trữ
-          </p>
+      {/* Action Bar (Clean, no redundant guidance) */}
+      <div className="bg-slate-900 text-white p-3.5 sm:p-4 rounded-xl shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Activity className="w-4 h-4 text-cyan-400 shrink-0" />
+          <h4 className="text-sm font-bold tracking-tight">Trung Tâm Quản Lý Nội Kiểm Xét Nghiệm (IQC)</h4>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -191,26 +226,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Tất Cả Thiết Bị ({instruments.length})
+            Tất Cả Thiết Bị ({instruments.length} máy · {results.length} KQ)
           </button>
-          {instruments.map((inst) => (
-            <button
-              key={inst.id}
-              onClick={() => setSelectedInstFilter(inst.id)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                selectedInstFilter === inst.id
-                  ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title={`${inst.name} - ${inst.department}`}
-            >
-              {inst.code || inst.id} ({inst.department.replace(/^Khoa\s+/i, '') || inst.name})
-            </button>
-          ))}
+          {instruments.map((inst) => {
+            const instAssayCount = assays.filter((a) => a.instrumentId === inst.id).length;
+            const instResCount = results.filter((r) => r.instrumentId === inst.id).length;
+            return (
+              <button
+                key={inst.id}
+                onClick={() => setSelectedInstFilter(inst.id)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                  selectedInstFilter === inst.id
+                    ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title={`${inst.name} - ${inst.department}`}
+              >
+                {inst.code || inst.id} ({instAssayCount} XN · {instResCount} KQ)
+              </button>
+            );
+          })}
         </div>
 
         <span className="text-xs text-slate-500 font-mono hidden sm:inline">
-          Hiển thị {filteredAssays.length} xét nghiệm
+          Hiển thị {filteredAssays.length} / {assays.length} xét nghiệm ({results.filter(r => selectedInstFilter === 'ALL' || r.instrumentId === selectedInstFilter).length} kết quả)
         </span>
       </div>
 

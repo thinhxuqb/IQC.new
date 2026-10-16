@@ -139,11 +139,11 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
           </div>
         </div>
 
-        {/* Card 2: Database Size & Counts */}
+        {/* Card 2: Database Size & Counts (Toàn bộ bộ đếm thực tế) */}
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Dung Lượng Cơ Sở Dữ Liệu
+              Dung Lượng Cơ Sở Dữ Liệu Thực Tế
             </span>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-2xl font-bold font-mono text-slate-900">
@@ -151,33 +151,49 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
               </span>
               <span className="text-xs text-slate-500">lần chạy QC đã lưu</span>
             </div>
-            <div className="text-xs text-slate-500 mt-2 space-y-0.5 font-mono">
-              <p>• AU400 Sinh hóa: {appState.results.filter(r => r.instrumentId === 'AU400').length} bản ghi</p>
-              <p>• Sysmex 800 Huyết học: {appState.results.filter(r => r.instrumentId === 'SYSMEX800').length} bản ghi</p>
-              <p>• Cobas e411 Miễn dịch: {appState.results.filter(r => r.instrumentId === 'COBASE411').length} bản ghi</p>
+            <div className="text-xs text-slate-600 mt-2 space-y-1 font-mono max-h-32 overflow-y-auto pr-1">
+              {appState.instruments.map((inst) => {
+                const count = appState.results.filter((r) => r.instrumentId === inst.id).length;
+                return (
+                  <p key={inst.id} className="flex justify-between items-center text-[11px]">
+                    <span className="truncate max-w-[170px]">• {inst.code || inst.id} ({inst.name}):</span>
+                    <strong className="text-slate-900 ml-1">{count} bản ghi</strong>
+                  </p>
+                );
+              })}
+              <div className="pt-1.5 mt-1 border-t border-slate-100 text-[10px] text-slate-500 flex justify-between">
+                <span>{appState.assays.length} xét nghiệm · {appState.lots.length} lô QC</span>
+                <span>{appState.logs.length} nhật ký</span>
+              </div>
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] text-emerald-700 font-medium">
-            ✓ Mã hóa toàn vẹn dữ liệu chuẩn y khoa
+          <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] text-emerald-700 font-medium flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 shrink-0" />
+            <span>Toàn vẹn dữ liệu y khoa chuẩn ISO 15189</span>
           </div>
         </div>
 
-        {/* Card 3: Backup & Restore Actions */}
+        {/* Card 3: Google Drive & Local Backup */}
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Sao Lưu & Phục Hồi Dữ Liệu
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Đồng Bộ Google Drive Đa Máy Trạm
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800">
+                Drive Cloud Sync
+              </span>
+            </div>
             <p className="text-xs text-slate-500 mt-1">
-              Xuất tệp sao lưu dự phòng định dạng JSON chuẩn hoặc phục hồi khi chuyển đổi máy tính phòng lab.
+              Đồng bộ cơ sở dữ liệu lên Google Drive để nhiều máy tính phòng xét nghiệm cùng dùng chung dữ liệu thời gian thực.
             </p>
           </div>
 
           <div className="mt-4 space-y-2">
             <button
               onClick={handleExportBackup}
-              className="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+              className="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-cyan-400" />
               <span>Tải Tệp Sao Lưu Dự Phòng (.json)</span>
@@ -198,7 +214,7 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
               <button
                 onClick={handleResetDemo}
                 title="Khôi phục lại dữ liệu mẫu 30 ngày"
-                className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs"
+                className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs cursor-pointer"
               >
                 Reset Demo
               </button>

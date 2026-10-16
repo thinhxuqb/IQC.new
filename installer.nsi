@@ -4,7 +4,7 @@
 
 Name "IQC by ThinhXu"
 Caption "Cài đặt IQC by ThinhXu - Quản Lý Nội Kiểm Xét Nghiệm"
-OutFile "dist-electron/IQC-by-ThinhXu-Setup-v1.1.4.exe"
+OutFile "dist-electron/IQC-by-ThinhXu-Setup-v1.1.5.exe"
 InstallDir "$LOCALAPPDATA\Programs\IQC by ThinhXu"
 RequestExecutionLevel user
 
@@ -31,7 +31,7 @@ Section "Install"
   WriteRegStr HKCU "Software\IQC by ThinhXu" "Install_Dir" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\IQCbyThinhXu" "DisplayName" "IQC by ThinhXu - Quản Lý Nội Kiểm Xét Nghiệm"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\IQCbyThinhXu" "DisplayIcon" "$INSTDIR\favicon.ico"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\IQCbyThinhXu" "DisplayVersion" "1.1.4"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\IQCbyThinhXu" "DisplayVersion" "1.1.5"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\IQCbyThinhXu" "Publisher" "ThinhXu"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\IQCbyThinhXu" "UninstallString" '"$INSTDIR\Uninstall.exe"'
 
