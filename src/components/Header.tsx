@@ -21,7 +21,8 @@ import {
   KeyRound,
   Building2,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Share2
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -181,6 +182,16 @@ export const Header: React.FC<HeaderProps> = ({
                 <Maximize2 className="w-3.5 h-3.5 text-slate-600" />
               )}
               <span className="hidden xl:inline text-[11px] font-mono">{isFullscreen ? 'Thu nhỏ' : '16:9 Full'}</span>
+            </button>
+
+            {/* Google Drive Multi-PC Sync Shortcut */}
+            <button
+              onClick={() => onSelectTab('backup')}
+              className="flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-cyan-200 bg-cyan-50/70 hover:bg-cyan-100 text-cyan-950 text-xs font-semibold shadow-2xs transition-all cursor-pointer shrink-0"
+              title="Đồng bộ cơ sở dữ liệu lên Google Drive dùng chung nhiều máy tính"
+            >
+              <Share2 className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
+              <span className="font-bold text-[11px] hidden sm:inline">Drive Sync</span>
             </button>
 
             {/* Manual Check for Updates Button */}

@@ -615,7 +615,7 @@ export default function App() {
 
       {/* Auto Update Available Confirmation Banner (Hỏi đồng ý cập nhật) */}
       {availableUpdate && !dismissedUpdatePrompt && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3 w-full no-print">
+        <div className="w-full max-w-[1920px] 2xl:max-w-full mx-auto px-3 sm:px-5 lg:px-6 mt-3 no-print">
           <div className="p-4 rounded-xl border border-indigo-300 bg-gradient-to-r from-indigo-50 via-sky-50 to-indigo-100 text-indigo-950 shadow-md flex flex-wrap items-center justify-between gap-4 animate-in slide-in-from-top-2">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0">
@@ -735,7 +735,7 @@ export default function App() {
 
       {/* Main Content Area (16:9 Full Màn Hình Máy Tính - Trải rộng tối đa không gian) */}
       {isLoggedIn ? (
-        <main className="flex-1 w-full max-w-[1920px] mx-auto px-3 sm:px-5 lg:px-6 py-4">
+        <main className="flex-1 w-full max-w-[1920px] 2xl:max-w-full mx-auto px-3 sm:px-5 lg:px-6 py-4">
           {/* Tab 1: Dashboard */}
           {currentTab === 'dashboard' && (
             <DashboardView
