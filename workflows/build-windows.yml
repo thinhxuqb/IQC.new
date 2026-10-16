@@ -1,0 +1,58 @@
+name: Build Windows EXE Installer
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [published, created]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci || npm install
+
+      - name: Install Electron & Electron-Builder
+        run: |
+          npm install -D electron electron-builder
+
+      - name: Build React Application
+        run: |
+          npm run build
+
+      - name: Build Windows .exe Installer & Portable
+        run: |
+          npx electron-builder --win --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: IQC-Windows-Installer
+          path: dist-electron/*.exe
+
+      - name: Attach EXE to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-electron/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
