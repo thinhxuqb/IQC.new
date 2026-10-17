@@ -464,9 +464,6 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                 </>
               )}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Kiến trúc Offline-First: Dữ liệu luôn an toàn trên máy trạm và tự động đồng bộ khi có mạng.
-            </p>
           </div>
 
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
@@ -536,9 +533,6 @@ export const BackupRestoreView: React.FC<BackupRestoreViewProps> = ({
                 Offline Backup
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Xuất tệp sao lưu dự phòng lưu trữ ngoại tuyến vào USB hoặc ổ cứng máy tính cá nhân.
-            </p>
           </div>
 
           <div className="mt-4 space-y-2">

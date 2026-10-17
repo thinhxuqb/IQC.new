@@ -36,9 +36,9 @@ export const MachineSignalReceiver: React.FC<MachineSignalReceiverProps> = ({
   onOpenChart,
   onOpenCapa,
 }) => {
-  const [selectedInstId, setSelectedInstId] = useState<InstrumentId>(() => instruments[0]?.id || 'AU400');
+  const [selectedInstId, setSelectedInstId] = useState<InstrumentId>('AU400');
   const [isListening, setIsListening] = useState<boolean>(true);
-  const [selectedAssayId, setSelectedAssayId] = useState<string>(() => assays[0]?.id || 'AU_GLU');
+  const [selectedAssayId, setSelectedAssayId] = useState<string>('AU_GLU');
   const [selectedLevel, setSelectedLevel] = useState<QCLevel>('level1');
   const [testMode, setTestMode] = useState<'normal' | 'trigger_1_3s' | 'trigger_2_2s' | 'random'>('normal');
   const [terminalLogs, setTerminalLogs] = useState<Array<{
@@ -46,24 +46,15 @@ export const MachineSignalReceiver: React.FC<MachineSignalReceiverProps> = ({
     timestamp: string;
     type: 'FRAME' | 'PARSED' | 'ALERT' | 'INFO';
     message: string;
-  }>>(() => [
+  }>>([
     {
       id: 'log_0',
       timestamp: new Date().toLocaleTimeString('vi-VN'),
       type: 'INFO',
-      message: instruments.length > 0
-        ? `Cổng giao tiếp LIS Driver đã sẵn sàng. Đang lắng nghe trên ${instruments.length} thiết bị khai báo: ${instruments.map(i => `${i.port} (${i.code} - ${i.name})`).join(', ')}.`
-        : 'Chưa có thiết bị nào được khai báo. Vui lòng vào mục Cấu hình QC -> Thiết bị để khai báo máy xét nghiệm.',
+      message: 'Cổng giao tiếp LIS Driver đã sẵn sàng. Đang lắng nghe trên COM1 (AU400), TCP 5000 (Sysmex 800), Port 2575 (Cobas e411).',
     },
   ]);
   const [lastReceivedResult, setLastReceivedResult] = useState<QCResult | null>(null);
-
-  // Tự động đồng bộ selectedInstId khi danh sách thiết bị thay đổi
-  useEffect(() => {
-    if (instruments.length > 0 && !instruments.some((i) => i.id === selectedInstId)) {
-      setSelectedInstId(instruments[0].id);
-    }
-  }, [instruments, selectedInstId]);
 
   // Danh mục xét nghiệm thuộc máy đang chọn
   const currentAssays = assays.filter((a) => a.instrumentId === selectedInstId);
@@ -159,14 +150,8 @@ export const MachineSignalReceiver: React.FC<MachineSignalReceiverProps> = ({
 
   // Nút gửi mô phỏng thủ công
   const handleSendTestTransmission = () => {
-    if (!currentInst) return;
     const assay = assays.find((a) => a.id === selectedAssayId) || currentAssays[0];
-    if (!assay) {
-      addLog('ALERT', `[${currentInst.code}] Thiết bị này chưa được khai báo xét nghiệm nào. Vui lòng khai báo xét nghiệm trong mục Cấu hình QC.`);
-      return;
-    }
-    const lot = lots.find((l) => l.assayId === assay.id && l.level === selectedLevel) || lots.find((l) => l.assayId === assay.id) || lots[0];
-    if (!lot) return;
+    const lot = lots.find((l) => l.assayId === assay.id && l.level === selectedLevel) || lots[0];
 
     let val = lot.targetMean;
     if (testMode === 'normal') {
@@ -184,29 +169,27 @@ export const MachineSignalReceiver: React.FC<MachineSignalReceiverProps> = ({
       val = Number((lot.targetMean + deltaZ * lot.targetSD).toFixed(assay.decimalPlaces));
     }
 
-    const frame = generateSimulatedSignal(selectedInstId, assay.code, selectedLevel, val, assay.unit, currentInst.protocol);
+    const frame = generateSimulatedSignal(selectedInstId, assay.code, selectedLevel, val, assay.unit);
     processIncomingFrame(frame, selectedInstId);
   };
 
   // Chế độ lắng nghe tự động (Auto Listening Generator)
   useEffect(() => {
-    if (!isListening || instruments.length === 0) return;
+    if (!isListening) return;
 
-    // Ngẫu nhiên phát tín hiệu từ các thiết bị đã khai báo khi bật chế độ lắng nghe
+    // Ngẫu nhiên phát tín hiệu từ 1 trong 3 máy mỗi 35 giây khi bật chế độ lắng nghe
     const interval = setInterval(() => {
       const randomInst = instruments[Math.floor(Math.random() * instruments.length)];
-      if (!randomInst) return;
       const instAssays = assays.filter((a) => a.instrumentId === randomInst.id);
       if (instAssays.length === 0) return;
       const targetAssay = instAssays[Math.floor(Math.random() * instAssays.length)];
-      const targetLot = lots.find((l) => l.assayId === targetAssay.id && l.active) || lots.find((l) => l.assayId === targetAssay.id);
-      if (!targetLot) return;
+      const targetLot = lots.find((l) => l.assayId === targetAssay.id && l.active) || lots[0];
 
       // Thỉnh thoảng tạo ca bình thường
       const deltaZ = (Math.random() * 1.8 - 0.9);
       const val = Number((targetLot.targetMean + deltaZ * targetLot.targetSD).toFixed(targetAssay.decimalPlaces));
 
-      const frame = generateSimulatedSignal(randomInst.id, targetAssay.code, targetLot.level, val, targetAssay.unit, randomInst.protocol);
+      const frame = generateSimulatedSignal(randomInst.id, targetAssay.code, targetLot.level, val, targetAssay.unit);
       processIncomingFrame(frame, randomInst.id);
     }, 45000);
 

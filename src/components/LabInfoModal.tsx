@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { LabInfo } from '../types/qc';
 import { DEFAULT_LAB_INFO } from '../utils/initialData';
 import { 
@@ -16,10 +16,7 @@ import {
   CheckCircle2, 
   FileText,
   Hospital,
-  Sparkles,
-  Upload,
-  Image as ImageIcon,
-  Trash2
+  Sparkles
 } from 'lucide-react';
 
 interface LabInfoModalProps {
@@ -38,8 +35,6 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
   const [formData, setFormData] = useState<LabInfo>({ ...labInfo });
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [activeSubTab, setActiveSubTab] = useState<'form' | 'preview'>('form');
-  const [logoError, setLogoError] = useState<string>('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -49,57 +44,6 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
       [field]: value,
     }));
     setSavedSuccess(false);
-  };
-
-  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLogoError('');
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      setLogoError('Vui lòng chọn tệp hình ảnh hợp lệ (PNG, JPG, SVG, WEBP).');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (!dataUrl) return;
-
-      // Tự động tối ưu kích thước ảnh logo để lưu LocalStorage mượt mà và in sắc nét
-      const img = new Image();
-      img.onload = () => {
-        const maxDim = 260;
-        let width = img.width;
-        let height = img.height;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width || 160;
-        canvas.height = height || 160;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const optimizedUrl = canvas.toDataURL('image/png', 0.92);
-          handleChange('logoUrl', optimizedUrl);
-        } else {
-          handleChange('logoUrl', dataUrl);
-        }
-      };
-      img.onerror = () => {
-        handleChange('logoUrl', dataUrl);
-      };
-      img.src = dataUrl;
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -179,83 +123,6 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
         <div className="flex-1 overflow-y-auto p-6">
           {activeSubTab === 'form' ? (
             <form id="lab-info-form" onSubmit={handleSubmit} className="space-y-6">
-              {/* Section 0: Logo Bệnh Viện Hiển Thị Trên Báo Cáo */}
-              <div className="bg-indigo-50/60 p-4 rounded-xl border border-indigo-200 space-y-3">
-                <div className="flex items-center justify-between border-b border-indigo-200/70 pb-2">
-                  <div className="flex items-center gap-2 text-indigo-950 font-bold text-xs uppercase tracking-wider">
-                    <ImageIcon className="w-4 h-4 text-indigo-600" />
-                    <span>Logo Bệnh Viện / Cơ Sở Y Tế (Hiển Thị Trên Báo Cáo QC)</span>
-                  </div>
-                  {formData.logoUrl && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleChange('logoUrl', '');
-                        if (fileInputRef.current) fileInputRef.current.value = '';
-                      }}
-                      className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 flex items-center gap-1 cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Xóa Logo</span>
-                    </button>
-                  )}
-                </div>
-
-                {logoError && (
-                  <p className="text-xs text-rose-600 font-medium">{logoError}</p>
-                )}
-
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                  <div className="w-20 h-20 rounded-xl border-2 border-dashed border-indigo-300 bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
-                    {formData.logoUrl ? (
-                      <img
-                        src={formData.logoUrl}
-                        alt="Logo bệnh viện"
-                        className="w-full h-full object-contain p-1"
-                      />
-                    ) : (
-                      <div className="text-center p-2 text-slate-400">
-                        <Hospital className="w-6 h-6 mx-auto mb-0.5 text-indigo-300" />
-                        <span className="text-[9px] font-medium block leading-tight">Chưa có logo</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 space-y-2 w-full">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleLogoFileChange}
-                        className="hidden"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-2xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>Tải Ảnh Logo Bệnh Viện Lên (PNG, JPG, SVG)</span>
-                      </button>
-                      <span className="text-[11px] text-slate-500">
-                        Ảnh được tự động căn chỉnh sắc nét trên góc trái tiêu đề Báo cáo A4.
-                      </span>
-                    </div>
-
-                    <div>
-                      <input
-                        type="text"
-                        value={formData.logoUrl || ''}
-                        onChange={(e) => handleChange('logoUrl', e.target.value)}
-                        placeholder="Hoặc dán đường dẫn URL hình ảnh logo bệnh viện tại đây..."
-                        className="w-full text-[11px] px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-mono text-slate-700"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Section 1: Đơn Vị & Cơ Sở */}
               <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200 space-y-4">
                 <div className="flex items-center gap-2 text-slate-800 font-bold text-xs uppercase tracking-wider border-b border-slate-200 pb-2">
@@ -521,29 +388,20 @@ export const LabInfoModal: React.FC<LabInfoModalProps> = ({
               <div className="bg-white border-2 border-slate-300 p-8 rounded-xl shadow-md space-y-6">
                 {/* Header Preview */}
                 <div className="border-b-2 border-slate-900 pb-4">
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex items-start gap-3.5">
-                      {formData.logoUrl && (
-                        <img
-                          src={formData.logoUrl}
-                          alt="Logo Bệnh Viện"
-                          className="w-14 h-14 object-contain shrink-0"
-                        />
-                      )}
-                      <div>
-                        <h4 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                          {formData.hospitalName} · {formData.name}
-                        </h4>
-                        <p className="text-xs text-slate-600 font-medium">
-                          {formData.department}
-                        </p>
-                        <p className="text-[11px] text-slate-500 mt-1">
-                          Địa chỉ: {formData.address} · ĐT: {formData.phone}
-                        </p>
-                        <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                          Mã biểu mẫu: {formData.documentCodePrefix}-GLU-2026 · Mã cơ sở: {formData.labCode}
-                        </p>
-                      </div>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+                        {formData.hospitalName} · {formData.name}
+                      </h4>
+                      <p className="text-xs text-slate-600 font-medium">
+                        {formData.department}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Địa chỉ: {formData.address} · ĐT: {formData.phone}
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                        Mã biểu mẫu: {formData.documentCodePrefix}-GLU-2026 · Mã cơ sở: {formData.labCode}
+                      </p>
                     </div>
                     <div className="text-right">
                       <span className="inline-block border border-slate-900 text-slate-900 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-slate-50">

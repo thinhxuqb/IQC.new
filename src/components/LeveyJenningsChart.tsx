@@ -184,6 +184,16 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
    * Render BIỂU ĐỒ GỘP TẤT CẢ CÁC MỨC NỒNG ĐỘ LÊN CHUNG 1 TRỤC (Shared SDI / Z-Score Axis)
    */
   const renderCombinedMultiLevelLJ = () => {
+    if (assayResults.length === 0) {
+      return (
+        <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-xs text-slate-500 shadow-xs space-y-2">
+          <CheckCircle className="w-8 h-8 text-slate-400 mx-auto" />
+          <p className="font-semibold text-slate-800 text-sm">Chưa có kết quả nội kiểm thực tế cho xét nghiệm này</p>
+          <p className="text-slate-400">Dữ liệu sẽ hiển thị ngay khi nhận tín hiệu từ máy LIS hoặc nhập kết quả kiểm chuẩn.</p>
+        </div>
+      );
+    }
+
     const width = 1040;
     const height = 400;
     const padding = { top: 40, right: 140, bottom: 50, left: 75 };
@@ -208,23 +218,25 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
     const yM2SD = getZ_Y(-2.0);
     const yM3SD = getZ_Y(-3.0);
 
-    // Xác định số lượng điểm trên trục X (lấy số điểm lớn nhất giữa các level)
-    const maxPoints = Math.max(
-      visibleLevels.level1 ? l1Results.length : 0,
-      visibleLevels.level2 ? l2Results.length : 0,
-      visibleLevels.level3 ? l3Results.length : 0,
-      1
-    );
+    // Tập hợp tất cả các thời điểm chạy đo QC thực tế duy nhất (không sinh điểm ảo)
+    const uniqueTimestamps = Array.from(
+      new Set(assayResults.map(r => r.timestamp))
+    ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
-    const getX = (index: number) => {
-      if (maxPoints <= 1) return padding.left + chartW / 2;
-      return padding.left + (index / (maxPoints - 1)) * chartW;
+    const totalRuns = uniqueTimestamps.length;
+
+    const getXByTimestamp = (timestamp: string) => {
+      const idx = uniqueTimestamps.indexOf(timestamp);
+      if (idx === -1) return padding.left + chartW / 2;
+      if (totalRuns <= 1) return padding.left + chartW / 2;
+      return padding.left + (idx / (totalRuns - 1)) * chartW;
     };
 
-    // Tạo đường SVG Path cho từng mức nồng độ
+    // Tạo đường SVG Path cho từng mức nồng độ dựa trên mốc thời gian thực
     const generatePath = (resultsList: QCResult[]) => {
-      return resultsList.reduce((acc, curr, idx) => {
-        const x = getX(idx);
+      const sorted = [...resultsList].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      return sorted.reduce((acc, curr, idx) => {
+        const x = getXByTimestamp(curr.timestamp);
         const y = getZ_Y(curr.zScore);
         return idx === 0 ? `M ${x} ${y}` : `${acc} L ${x} ${y}`;
       }, '');
@@ -238,19 +250,14 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
       <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
         {/* Header Thông Tin L-J Gộp Chung */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-cyan-600 animate-pulse" />
-              <h4 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <span>Biểu Đồ Levey-Jennings Gộp Chung Tất Cả Mức Nồng Độ</span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200">
-                  Chuẩn hóa Trục SDI (Z-Score)
-                </span>
-              </h4>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Đồng trục chuẩn hóa theo độ lệch chuẩn (±1SD, ±2SD, ±3SD). Giúp so sánh độ chệch hệ thống và phát hiện vi phạm liên mức R-4s tức thì.
-            </p>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan-600 animate-pulse" />
+            <h4 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+              <span>Biểu Đồ Levey-Jennings Gộp Chung Tất Cả Mức Nồng Độ</span>
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200">
+                Chuẩn hóa Trục SDI (Z-Score)
+              </span>
+            </h4>
           </div>
 
           {/* Interactive Legend Toggles */}
@@ -382,9 +389,9 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
               strokeWidth="1" 
             />
 
-            {/* Lưới dọc theo số lần chạy */}
-            {Array.from({ length: maxPoints }).map((_, idx) => {
-              const x = getX(idx);
+            {/* Lưới dọc theo số lần chạy thực tế */}
+            {uniqueTimestamps.map((ts, idx) => {
+              const x = getXByTimestamp(ts);
               return (
                 <line 
                   key={`comb-vline-${idx}`}
@@ -482,8 +489,8 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
             )}
 
             {/* CÁC ĐIỂM ĐO MỨC 1 (Level 1 - Điểm Tròn Circle) */}
-            {visibleLevels.level1 && lotL1 && l1Results.map((res, idx) => {
-              const cx = getX(idx);
+            {visibleLevels.level1 && lotL1 && l1Results.map((res) => {
+              const cx = getXByTimestamp(res.timestamp);
               const cy = getZ_Y(res.zScore);
               const isReject = res.status === 'REJECTED';
               const isWarning = res.status === 'WARNING';
@@ -522,8 +529,8 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
             })}
 
             {/* CÁC ĐIỂM ĐO MỨC 2 (Level 2 - Điểm Hình Thoi Diamond) */}
-            {visibleLevels.level2 && lotL2 && l2Results.map((res, idx) => {
-              const cx = getX(idx);
+            {visibleLevels.level2 && lotL2 && l2Results.map((res) => {
+              const cx = getXByTimestamp(res.timestamp);
               const cy = getZ_Y(res.zScore);
               const isReject = res.status === 'REJECTED';
               const isWarning = res.status === 'WARNING';
@@ -564,11 +571,10 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
               );
             })}
 
-            {/* NHÃN THỜI GIAN / NGÀY THÁNG TRÊN TRỤC X */}
-            {Array.from({ length: maxPoints }).map((_, idx) => {
-              const cx = getX(idx);
-              const sampleResult = (visibleLevels.level1 && l1Results[idx]) || (visibleLevels.level2 && l2Results[idx]) || (visibleLevels.level3 && l3Results[idx]);
-              const dateLabel = sampleResult ? new Date(sampleResult.timestamp).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : `#${idx + 1}`;
+            {/* NHÃN THỜI GIAN / NGÀY THÁNG TRÊN TRỤC X DỰA TRÊN CÁC LƯỢT CHẠY THỰC TẾ */}
+            {uniqueTimestamps.map((ts, idx) => {
+              const cx = getXByTimestamp(ts);
+              const dateLabel = new Date(ts).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
               return (
                 <text 
                   key={`xlabel-${idx}`}
@@ -589,7 +595,7 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
               textAnchor="middle" 
               className="text-[11px] font-medium fill-slate-500"
             >
-              Chuỗi lượt chạy nội kiểm định kỳ ({maxPoints} lượt đo gần nhất)
+              Chuỗi lượt chạy nội kiểm định kỳ ({totalRuns} lượt đo thực tế)
             </text>
           </svg>
 
@@ -678,6 +684,14 @@ export const LeveyJenningsChart: React.FC<LeveyJenningsChartProps> = ({
    * Render biểu đồ riêng lẻ từng mức (cho chế độ xem tách rời khi cần kiểm tra sâu)
    */
   const renderSingleLotLJ = (lot: QCLot, lotResults: QCResult[], stats: ReturnType<typeof calculateQCStatistics> | null) => {
+    if (lotResults.length === 0) {
+      return (
+        <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-xs text-slate-400 shadow-xs">
+          Chưa có kết quả nội kiểm thực tế cho {lot.levelName} (Lô {lot.lotNumber})
+        </div>
+      );
+    }
+
     const width = 1040;
     const height = 320;
     const padding = { top: 35, right: 60, bottom: 45, left: 75 };

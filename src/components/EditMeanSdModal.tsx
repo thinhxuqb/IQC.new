@@ -149,14 +149,9 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
             <div className="w-8 h-8 rounded-lg bg-cyan-600/30 text-cyan-400 flex items-center justify-center font-bold">
               <History className="w-4 h-4" />
             </div>
-            <div>
-              <h3 className="text-sm font-bold tracking-wide">
-                Hiệu Chỉnh Mean & SD (Hỗ Trợ 2 Số Thập Phân)
-              </h3>
-              <p className="text-xs text-slate-300">
-                Ghi nhận nhật ký kiểm toán khi thay đổi thông số kiểm chuẩn
-              </p>
-            </div>
+            <h3 className="text-sm font-bold tracking-wide">
+              Lịch Sửa Cập Nhật Mean/SD - Hiệu Chỉnh Giá Trị
+            </h3>
           </div>
           <button
             onClick={onClose}
@@ -283,11 +278,11 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
             </div>
           </div>
 
-          {/* Phần Lưu Vết Bắt Buộc */}
+          {/* Phần Lịch sửa cập nhật Mean/SD Bắt Buộc */}
           <div className="border-t border-slate-200 pt-4 space-y-3">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
               <ShieldAlert className="w-4 h-4 text-cyan-700" />
-              <span>THÔNG TIN LƯU VẾT HỒ SƠ CHẤT LƯỢNG (BẮT BUỘC)</span>
+              <span>LỊCH SỬA CẬP NHẬT MEAN/SD (BẮT BUỘC)</span>
             </div>
 
             <div>
@@ -386,7 +381,7 @@ export const EditMeanSdModal: React.FC<EditMeanSdModalProps> = ({
               className="px-4 py-2 text-xs font-semibold text-white bg-cyan-700 hover:bg-cyan-800 rounded-md transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Check className="w-4 h-4" />
-              Lưu Hiệu Chỉnh & Tạo Lưu Vết
+              Lưu Hiệu Chỉnh & Cập Nhật Lịch Sử
             </button>
           </div>
         </form>

@@ -426,10 +426,10 @@ export const MultiChartGridView: React.FC<MultiChartGridViewProps> = ({
                         </span>
                         <div>
                           <h4 className="font-bold text-sm text-slate-900 leading-tight">
-                            {assay.code} - {assay.name}
+                            {assay.name}
                           </h4>
                           <span className="text-xs text-slate-500 font-medium">
-                            Đơn vị: <strong>{assay.unit}</strong> · Giới hạn sai số TEa: <strong>{assay.cliaTeaPercent}%</strong> · Phương pháp: {assay.method}
+                            Đơn vị: <strong>{assay.unit}</strong> · Giới hạn sai số TEa: <strong>{assay.cliaTeaPercent}%</strong>
                           </span>
                         </div>
                       </div>

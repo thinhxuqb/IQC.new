@@ -849,9 +849,6 @@ export default function App() {
                 <h3 className="text-base font-bold text-slate-900">
                   Xuất Báo Cáo Nội Kiểm Định Kỳ (PDF)
                 </h3>
-                <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
-                  Tạo báo cáo tháng tiêu chuẩn y khoa với đầy đủ chỉ số thống kê Mean, SD, CV%, SDI, Six Sigma, biểu đồ L-J và 3 chữ ký thẩm định.
-                </p>
               </div>
               <button
                 onClick={() => setIsReportModalOpen(true)}

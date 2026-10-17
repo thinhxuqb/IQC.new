@@ -268,7 +268,7 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                 </div>
               </div>
 
-              {/* What's new in v1.1.5 */}
+              {/* What's new in v1.1.6 */}
               <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
                   <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -276,19 +276,28 @@ export const UpdateCheckModal: React.FC<UpdateCheckModalProps> = ({
                 </div>
                 <ul className="text-[11px] text-emerald-900 space-y-1 list-disc pl-4">
                   <li>
-                    <strong>Tất cả bộ đếm là dữ liệu thực:</strong> Six Sigma tính toán động từ TEa & kết quả thực tế; đếm chuẩn xác số bản ghi từng máy, số sự cố CAPA chờ ký và tỷ lệ đạt chuẩn.
+                    <strong>Giao diện đồng cấp chuẩn mực:</strong> Tất cả bảng danh mục, biểu đồ và biểu mẫu được chuẩn hóa đồng nhất layout, phông chữ và kích thước.
                   </li>
                   <li>
-                    <strong>Màn hình tỷ lệ 16:9 Full màn hình máy tính:</strong> Trải rộng toàn bộ 100% không gian hiển thị trên màn hình máy tính trạm 16:9 (1080p/2K/4K) với nút bật/tắt toàn màn hình tiện lợi.
+                    <strong>Khai báo thiết bị tinh gọn:</strong> Chỉ gồm Tên máy, Cổng kết nối, Địa chỉ port và Trạng thái.
                   </li>
                   <li>
-                    <strong>Ẩn các hướng dẫn & gợi ý dư thừa:</strong> Giao diện thao tác tinh gọn, chuyên nghiệp, không vướng víu gợi ý hay hướng dẫn lặp lại.
+                    <strong>Khai báo xét nghiệm tinh gọn:</strong> Loại bỏ phần phương pháp và mã xét nghiệm rườm rà.
                   </li>
                   <li>
-                    <strong>Đồng bộ Google Drive dùng chung nhiều máy:</strong> Lưu trữ và đồng bộ tức thì toàn bộ cơ sở dữ liệu nội kiểm lên Google Drive để chia sẻ dữ liệu liên máy trạm.
+                    <strong>Khai báo vật liệu QC tinh gọn:</strong> Loại bỏ mã vật liệu và nền mẫu.
                   </li>
                   <li>
-                    <strong>Tự động cập nhật ngầm v1.1.5:</strong> Nhận diện và tải ngầm phiên bản 1.1.5 từ GitHub Release chỉ với 1 cú click.
+                    <strong>Lịch sửa cập nhật Mean/SD:</strong> Đổi tên và chuẩn hóa giao diện ghi vết lịch sử cập nhật giá trị kiểm chuẩn.
+                  </li>
+                  <li>
+                    <strong>Phân quyền nghiêm ngặt:</strong> Siết chặt quyền sửa cấu hình, duyệt CAPA và quản lý người dùng theo đúng vai trò.
+                  </li>
+                  <li>
+                    <strong>Biểu đồ LJ & CAPA chuẩn xác:</strong> Tuyệt đối không sinh điểm ảo, chỉ hiển thị dữ liệu đo thực tế.
+                  </li>
+                  <li>
+                    <strong>Loại bỏ triệt để mô tả & gợi ý:</strong> Giao diện sạch sẽ, chuyên nghiệp chuẩn phần mềm y tế.
                   </li>
                 </ul>
               </div>

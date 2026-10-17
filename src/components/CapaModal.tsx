@@ -97,14 +97,9 @@ export const CapaModal: React.FC<CapaModalProps> = ({
             <div className={`p-1.5 rounded-lg ${result.status === 'REJECTED' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>
               <ShieldAlert className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">
-                Hồ Sơ Xử Lý Sự Cố QC & Hành Động Khắc Phục (CAPA)
-              </h3>
-              <p className="text-xs text-slate-500">
-                Quy trình chuẩn hóa - Quản lý sự cố nội kiểm chất lượng
-              </p>
-            </div>
+            <h3 className="text-base font-bold text-slate-900">
+              Hồ Sơ Xử Lý Sự Cố QC & Hành Động Khắc Phục (CAPA)
+            </h3>
           </div>
           <button
             onClick={onClose}
@@ -238,9 +233,6 @@ export const CapaModal: React.FC<CapaModalProps> = ({
                 />
                 <span className="text-xs text-slate-500 font-mono shrink-0">{assay?.unit}</span>
               </div>
-              <span className="text-[10px] text-slate-400 mt-0.5 block">
-                Nhập giá trị sau khi khắc phục để kiểm tra tính hợp lệ
-              </span>
             </div>
 
             <div>

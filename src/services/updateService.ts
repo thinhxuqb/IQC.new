@@ -10,7 +10,7 @@ export interface UpdateInfo {
   releaseUrl: string;
 }
 
-export const APP_CURRENT_VERSION = 'v1.1.5';
+export const APP_CURRENT_VERSION = 'v1.1.6';
 export const GITHUB_REPO = 'thinhxuqb/IQC.new';
 export const GITHUB_RELEASES_URL = `https://github.com/${GITHUB_REPO}/releases`;
 export const GITHUB_LATEST_RELEASE_URL = `https://github.com/${GITHUB_REPO}/releases/latest`;

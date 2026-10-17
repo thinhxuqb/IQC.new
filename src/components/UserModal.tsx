@@ -187,14 +187,9 @@ export const UserModal: React.FC<UserModalProps> = ({
             <div className="w-8 h-8 rounded-lg bg-cyan-600/30 text-cyan-400 flex items-center justify-center font-bold">
               <UserPlus className="w-4 h-4" />
             </div>
-            <div>
-              <h3 className="text-sm font-bold tracking-wide">
-                {isEditing ? 'Chỉnh Sửa & Cấp Quyền Người Dùng' : 'Khai Báo Người Dùng Mới'}
-              </h3>
-              <p className="text-xs text-slate-300">
-                Phân quyền truy cập & bảo mật tài khoản phòng xét nghiệm
-              </p>
-            </div>
+            <h3 className="text-sm font-bold tracking-wide">
+              {isEditing ? 'Chỉnh Sửa & Cấp Quyền Người Dùng' : 'Khai Báo Người Dùng Mới'}
+            </h3>
           </div>
           <button
             onClick={onClose}
@@ -340,7 +335,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                   className="rounded text-cyan-700 focus:ring-cyan-500 w-4 h-4 cursor-pointer"
                 />
                 <span className="text-slate-800 font-bold text-cyan-900">
-                  Sửa Mean & SD có lưu vết
+                  Lịch sửa cập nhật Mean & SD
                 </span>
               </label>
 

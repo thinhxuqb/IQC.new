@@ -29,12 +29,10 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<Partial<QCMaterial>>({
     name: '',
-    code: '',
     manufacturer: COMMON_MANUFACTURERS[0],
     lotNumber: '',
     expDate: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().split('T')[0],
-    matrix: 'SERUM',
-    storageCondition: '2 - 8°C (Tránh ánh sáng trực tiếp)',
+    storageCondition: '2 - 8°C',
     active: true,
     notes: '',
     levels: [
@@ -57,12 +55,10 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
     } else {
       setFormData({
         name: '',
-        code: `QC-MAT-${Date.now().toString().slice(-4)}`,
         manufacturer: COMMON_MANUFACTURERS[0],
         lotNumber: '',
         expDate: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().split('T')[0],
-        matrix: 'SERUM',
-        storageCondition: '2 - 8°C (Tránh ánh sáng trực tiếp)',
+        storageCondition: '2 - 8°C',
         active: true,
         notes: '',
         levels: [
@@ -108,11 +104,11 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name?.trim()) {
-      setError('Vui lòng nhập tên Vật liệu QC / Huyết thanh kiểm tra.');
+      setError('Vui lòng nhập tên Vật liệu QC.');
       return;
     }
     if (!formData.lotNumber?.trim()) {
-      setError('Vui lòng nhập Số Lô (Lot Number) của nhà sản xuất.');
+      setError('Vui lòng nhập Số Lô (Lot Number).');
       return;
     }
     if (!formData.expDate) {
@@ -120,18 +116,18 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
       return;
     }
     if (!formData.levels || formData.levels.length === 0) {
-      setError('Vui lòng cấu hình ít nhất 1 mức nồng độ cho vật liệu QC này.');
+      setError('Vui lòng cấu hình ít nhất 1 mức nồng độ.');
       return;
     }
 
     const newMaterial: QCMaterial = {
       id: material ? material.id : `MAT_${Date.now()}`,
       name: formData.name.trim(),
-      code: formData.code?.trim() || `QC-MAT-${Date.now().toString().slice(-4)}`,
+      code: material?.code || `MAT_${Date.now().toString().slice(-4)}`,
       manufacturer: formData.manufacturer || COMMON_MANUFACTURERS[0],
       lotNumber: formData.lotNumber.trim().toUpperCase(),
       expDate: formData.expDate,
-      matrix: formData.matrix || 'SERUM',
+      matrix: material?.matrix || 'SERUM',
       storageCondition: formData.storageCondition?.trim() || '2 - 8°C',
       levels: formData.levels,
       active: formData.active ?? true,
@@ -144,20 +140,15 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
               <Layers className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="font-bold text-base">
-                {material ? 'Chỉnh Sửa Vật Liệu QC' : 'Khai Báo Vật Liệu QC Mới'}
-              </h3>
-              <p className="text-xs text-slate-300">
-                1 Vật liệu QC (Huyết thanh kiểm tra) có thể dùng cho nhiều xét nghiệm
-              </p>
-            </div>
+            <h3 className="font-bold text-base">
+              {material ? 'Chỉnh Sửa Vật Liệu QC' : 'Khai Báo Vật Liệu QC Mới'}
+            </h3>
           </div>
           <button
             onClick={onClose}
@@ -175,36 +166,21 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                Tên Vật Liệu QC <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="VD: Lyphochek Assayed Chemistry Control"
-                value={formData.name}
-                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                Mã Vật Liệu
-              </label>
-              <input
-                type="text"
-                placeholder="VD: QC-CHEM-BIO"
-                value={formData.code}
-                onChange={e => setFormData({ ...formData, code: e.target.value })}
-                className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none uppercase font-mono"
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Tên Vật Liệu QC <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="VD: Lyphochek Assayed Chemistry Control"
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+            />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
                 Hãng Sản Xuất <span className="text-rose-500">*</span>
@@ -240,7 +216,7 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
                 Hạn Dùng (Exp Date) <span className="text-rose-500">*</span>
@@ -252,23 +228,6 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                 onChange={e => setFormData({ ...formData, expDate: e.target.value })}
                 className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                Nền Mẫu (Matrix)
-              </label>
-              <select
-                value={formData.matrix}
-                onChange={e => setFormData({ ...formData, matrix: e.target.value as any })}
-                className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-white"
-              >
-                <option value="SERUM">Huyết thanh (Serum)</option>
-                <option value="PLASMA">Huyết tương (Plasma)</option>
-                <option value="WHOLE_BLOOD">Máu toàn phần (Whole Blood)</option>
-                <option value="URINE">Nước tiểu (Urine)</option>
-                <option value="CSF">Dịch não tủy (CSF)</option>
-              </select>
             </div>
 
             <div>
@@ -285,12 +244,12 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
             </div>
           </div>
 
-          {/* Cấu hình các Mức nồng độ của Vật liệu QC */}
+          {/* Cấu hình các Mức nồng độ */}
           <div className="pt-2 border-t border-slate-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-teal-600" />
-                <span>Các Mức Nồng Độ Có Sẵn ({formData.levels?.length || 0})</span>
+                <span>Các Mức Nồng Độ ({formData.levels?.length || 0})</span>
               </span>
               {(formData.levels?.length || 0) < 3 && (
                 <button
@@ -320,16 +279,16 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
                   />
                   <input
                     type="text"
-                    placeholder="Mã phụ / Lô mức (tùy chọn)"
+                    placeholder="Mã phụ / Lô mức"
                     value={lvl.lotSubNumber || ''}
                     onChange={e => handleLevelChange(index, 'lotSubNumber', e.target.value)}
-                    className="w-36 text-xs px-2.5 py-1.5 border border-slate-300 rounded bg-white outline-none font-mono text-[11px]"
+                    className="w-32 text-xs px-2.5 py-1.5 border border-slate-300 rounded bg-white outline-none font-mono text-[11px]"
                   />
                   {(formData.levels?.length || 0) > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveLevel(index)}
-                      className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                      className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
                       title="Xóa mức này"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -342,11 +301,11 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Ghi Chú Ứng Dụng (Các xét nghiệm khuyến nghị)
+              Ghi Chú
             </label>
             <textarea
               rows={2}
-              placeholder="VD: Dùng chung cho Glucose, Urea, Creatinine, AST, ALT trên AU400..."
+              placeholder="Ghi chú thêm..."
               value={formData.notes}
               onChange={e => setFormData({ ...formData, notes: e.target.value })}
               className="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
@@ -359,10 +318,10 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
               id="mat_active"
               checked={formData.active}
               onChange={e => setFormData({ ...formData, active: e.target.checked })}
-              className="w-4 h-4 text-teal-600 rounded border-slate-300"
+              className="w-4 h-4 text-teal-600 rounded border-slate-300 cursor-pointer"
             />
             <label htmlFor="mat_active" className="text-xs font-medium text-slate-700 cursor-pointer">
-              Đang hoạt động (Kích hoạt áp dụng trong phòng lab)
+              Đang hoạt động
             </label>
           </div>
 
@@ -376,7 +335,7 @@ export const MaterialModal: React.FC<MaterialModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{material ? 'Lưu Thay Đổi' : 'Thêm Vật Liệu QC'}</span>

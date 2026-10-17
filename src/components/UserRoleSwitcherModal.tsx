@@ -20,7 +20,7 @@ export const UserRoleSwitcherModal: React.FC<UserRoleSwitcherModalProps> = ({
 
   const permissionItems = [
     { key: 'canInputQC', label: 'Nhập kết quả QC thủ công & nhận tín hiệu máy LIS', enabled: currentUser.permissions?.canInputQC },
-    { key: 'canEditMeanSD', label: 'Hiệu chỉnh giá trị Mean & SD (2 số thập phân) có lưu vết', enabled: currentUser.permissions?.canEditMeanSD },
+    { key: 'canEditMeanSD', label: 'Hiệu chỉnh giá trị Mean & SD (Lịch sửa cập nhật Mean/SD)', enabled: currentUser.permissions?.canEditMeanSD },
     { key: 'canApproveCapa', label: 'Thẩm định và phê duyệt hồ sơ khắc phục sự cố CAPA', enabled: currentUser.permissions?.canApproveCapa },
     { key: 'canManageConfig', label: 'Quản trị Thiết bị, Xét nghiệm, Vật liệu & Map kiểm chuẩn', enabled: currentUser.permissions?.canManageConfig },
     { key: 'canManageUsers', label: 'Quản lý tài khoản người dùng & phân quyền truy cập', enabled: currentUser.permissions?.canManageUsers },

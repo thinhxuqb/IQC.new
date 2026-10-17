@@ -49,17 +49,11 @@ export const QCReportModal: React.FC<QCReportModalProps> = ({
     return new Date().toISOString().slice(0, 10);
   });
 
-  const [selectedInstId, setSelectedInstId] = useState<string>(() => instruments[0]?.id || 'AU400');
-  const [selectedAssayId, setSelectedAssayId] = useState<string>(() => assays[0]?.id || 'AU_GLU');
-
-  React.useEffect(() => {
-    if (instruments.length > 0 && !instruments.some((i) => i.id === selectedInstId)) {
-      setSelectedInstId(instruments[0].id);
-    }
-  }, [instruments, selectedInstId]);
+  const [selectedInstId, setSelectedInstId] = useState<string>('AU400');
+  const [selectedAssayId, setSelectedAssayId] = useState<string>('AU_GLU');
 
   const availableAssays = assays.filter((a) => a.instrumentId === selectedInstId);
-  const currentAssay = availableAssays.find((a) => a.id === selectedAssayId) || availableAssays[0] || assays[0];
+  const currentAssay = assays.find((a) => a.id === selectedAssayId) || availableAssays[0];
   const currentInst = instruments.find((i) => i.id === selectedInstId) || instruments[0];
 
   // Tính toán khoảng ngày thực tế và tiêu đề kỳ báo cáo
@@ -408,29 +402,20 @@ export const QCReportModal: React.FC<QCReportModalProps> = ({
         <div className="p-8 overflow-y-auto flex-1 bg-white text-slate-900 print-container" id="qc-printable-report">
           {/* Header Phòng Xét Nghiệm Chuẩn Y Tế */}
           <div className="border-b-2 border-slate-900 pb-4 mb-6 print-break-inside-avoid">
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex items-start gap-3.5">
-                {currentLabInfo.logoUrl && (
-                  <img
-                    src={currentLabInfo.logoUrl}
-                    alt="Logo Bệnh Viện"
-                    className="w-14 h-14 object-contain shrink-0"
-                  />
-                )}
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                    {currentLabInfo.hospitalName} · {currentLabInfo.name}
-                  </h4>
-                  <p className="text-[11px] text-slate-600 font-medium">
-                    {currentLabInfo.department}
-                  </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">
-                    Đ/C: {currentLabInfo.address} · Hotline: {currentLabInfo.phone}
-                  </p>
-                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                    Mã biểu mẫu: {currentLabInfo.documentCodePrefix}-{currentAssay?.code || 'LAB'}-2026 · Mã CS: {currentLabInfo.labCode}
-                  </p>
-                </div>
+            <div className="flex justify-between items-start">
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                  {currentLabInfo.hospitalName} · {currentLabInfo.name}
+                </h4>
+                <p className="text-[11px] text-slate-600 font-medium">
+                  {currentLabInfo.department}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  Đ/C: {currentLabInfo.address} · Hotline: {currentLabInfo.phone}
+                </p>
+                <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                  Mã biểu mẫu: {currentLabInfo.documentCodePrefix}-{currentAssay?.code || 'LAB'}-2026 · Mã CS: {currentLabInfo.labCode}
+                </p>
               </div>
               <div className="text-right">
                 <span className="inline-block border border-slate-900 text-slate-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-slate-50">
@@ -470,8 +455,10 @@ export const QCReportModal: React.FC<QCReportModalProps> = ({
               <p className="mt-1"><span className="text-slate-500">Khoa / Bộ phận:</span> {currentInst.department}</p>
             </div>
             <div>
-              <p><span className="text-slate-500">Phương pháp xét nghiệm:</span> <strong className="text-slate-900">{currentAssay?.method}</strong></p>
-              <p className="mt-1"><span className="text-slate-500">Đơn vị đo / Loại mẫu:</span> {currentAssay?.unit} / {currentAssay?.sampleType}</p>
+              {currentAssay?.method && (
+                <p><span className="text-slate-500">Phương pháp xét nghiệm:</span> <strong className="text-slate-900">{currentAssay.method}</strong></p>
+              )}
+              <p className={currentAssay?.method ? "mt-1" : ""}><span className="text-slate-500">Đơn vị đo / Loại mẫu:</span> {currentAssay?.unit} / {currentAssay?.sampleType}</p>
               <p className="mt-1"><span className="text-slate-500">Tổng sai số cho phép TEa:</span> <strong className="text-slate-900">{currentAssay?.cliaTeaPercent}% (CLIA)</strong></p>
             </div>
           </div>

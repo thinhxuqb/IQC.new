@@ -21,10 +21,11 @@ export const CapaListView: React.FC<CapaListViewProps> = ({
 }) => {
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'PENDING' | 'RESOLVED'>('ALL');
   const [filterInst, setFilterInst] = useState<string>('ALL');
+  const canApprove = currentUser.role === 'director' || currentUser.role === 'manager';
 
-  // Lọc các kết quả có sự cố (bị Reject hoặc Warning hoặc đã có CAPA)
+  // Lọc các kết quả có sự cố thực tế: Bị REJECTED (từ chối do vi phạm quy tắc) hoặc đã có hồ sơ CAPA thực tế
   const baseIncidents = results.filter((r) => {
-    const isIncident = r.status === 'REJECTED' || r.status === 'WARNING' || Boolean(r.capa);
+    const isIncident = r.status === 'REJECTED' || Boolean(r.capa);
     if (!isIncident) return false;
     if (filterInst !== 'ALL' && r.instrumentId !== filterInst) return false;
     return true;
@@ -47,15 +48,19 @@ export const CapaListView: React.FC<CapaListViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Filter and Counter */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200">
-        <div>
-          <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-rose-600" />
-            <span>Sổ Nhật Ký Xử Lý Sự Cố QC & Khắc Phục (CAPA Register)</span>
-          </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Quản lý các lần chạy vi phạm quy tắc Westgard và quy trình thẩm định ký duyệt chất lượng
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-slate-900 text-rose-400 flex items-center justify-center shrink-0">
+            <ShieldAlert className="w-4 h-4" />
+          </div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-bold text-slate-900">
+              Sổ Nhật Ký Xử Lý Sự Cố QC & Khắc Phục (CAPA)
+            </h3>
+            <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-200">
+              {totalIncidentCount}
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -205,9 +210,9 @@ export const CapaListView: React.FC<CapaListViewProps> = ({
                       <td className="p-3 text-right whitespace-nowrap space-x-1">
                         <button
                           onClick={() => onOpenCapaModal(item)}
-                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-medium transition-colors"
+                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-medium transition-colors cursor-pointer"
                         >
-                          {item.capa ? 'Sửa / Duyệt CAPA' : 'Lập hồ sơ CAPA'}
+                          {item.capa ? (canApprove ? 'Sửa / Duyệt CAPA' : 'Xem CAPA') : 'Lập hồ sơ CAPA'}
                         </button>
                         <button
                           onClick={() => onOpenChart(item.assayId)}

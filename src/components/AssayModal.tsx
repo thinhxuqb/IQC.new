@@ -20,34 +20,28 @@ export const AssayModal: React.FC<AssayModalProps> = ({
   const isEditing = Boolean(assayToEdit);
 
   const [instrumentId, setInstrumentId] = useState<string>('AU400');
-  const [code, setCode] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [unit, setUnit] = useState<string>('mmol/L');
   const [sampleType, setSampleType] = useState<TestAssay['sampleType']>('SERUM');
   const [decimalPlaces, setDecimalPlaces] = useState<number>(2);
   const [cliaTeaPercent, setCliaTeaPercent] = useState<number>(10);
-  const [method, setMethod] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
 
   useEffect(() => {
     if (assayToEdit) {
       setInstrumentId(assayToEdit.instrumentId || instruments[0]?.id || 'AU400');
-      setCode(assayToEdit.code || '');
       setName(assayToEdit.name || '');
       setUnit(assayToEdit.unit || 'mmol/L');
       setSampleType(assayToEdit.sampleType || 'SERUM');
       setDecimalPlaces(assayToEdit.decimalPlaces ?? 2);
       setCliaTeaPercent(assayToEdit.cliaTeaPercent ?? 10);
-      setMethod(assayToEdit.method || '');
     } else {
       setInstrumentId(instruments[0]?.id || 'AU400');
-      setCode('');
       setName('');
       setUnit('mmol/L');
       setSampleType('SERUM');
       setDecimalPlaces(2);
       setCliaTeaPercent(10);
-      setMethod('');
     }
     setErrorMsg('');
   }, [assayToEdit, isOpen, instruments]);
@@ -58,17 +52,15 @@ export const AssayModal: React.FC<AssayModalProps> = ({
     e.preventDefault();
     setErrorMsg('');
 
-    if (!code.trim()) {
-      setErrorMsg('Vui lòng nhập Mã xét nghiệm (Ví dụ: GLU, URE, AST...).');
-      return;
-    }
     if (!name.trim()) {
-      setErrorMsg('Vui lòng nhập Tên đầy đủ của xét nghiệm.');
+      setErrorMsg('Vui lòng nhập Tên xét nghiệm.');
       return;
     }
 
-    const cleanCode = code.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
-    const assayId = isEditing && assayToEdit ? assayToEdit.id : `${instrumentId}_${cleanCode}`;
+    // Tự sinh mã định danh và code nội bộ từ tên xét nghiệm
+    const cleanWord = name.trim().split(/[\s(/]+/).filter(Boolean)[0] || 'TEST';
+    const cleanCode = isEditing && assayToEdit ? assayToEdit.code : cleanWord.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+    const assayId = isEditing && assayToEdit ? assayToEdit.id : `${instrumentId}_${cleanCode}_${Date.now().toString().slice(-4)}`;
 
     const assayData: TestAssay = {
       id: assayId,
@@ -79,7 +71,7 @@ export const AssayModal: React.FC<AssayModalProps> = ({
       sampleType,
       decimalPlaces: Math.max(0, Math.min(4, decimalPlaces)),
       cliaTeaPercent: Math.max(0.1, cliaTeaPercent),
-      method: method.trim() || 'Phương pháp tự động theo hóa chất chuẩn',
+      method: assayToEdit?.method || '',
     };
 
     onSave(assayData);
@@ -88,24 +80,19 @@ export const AssayModal: React.FC<AssayModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden my-6">
+      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden my-6">
         <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-cyan-600/30 text-cyan-400 flex items-center justify-center font-bold">
               <TestTube className="w-4 h-4" />
             </div>
-            <div>
-              <h3 className="text-sm font-bold tracking-wide">
-                {isEditing ? 'Chỉnh Sửa Thông Tin Xét Nghiệm' : 'Khai Báo Xét Nghiệm Mới'}
-              </h3>
-              <p className="text-xs text-slate-300">
-                Thông số kỹ thuật & Giới hạn sai số TEa% xét nghiệm
-              </p>
-            </div>
+            <h3 className="text-sm font-bold tracking-wide">
+              {isEditing ? 'Chỉnh Sửa Xét Nghiệm' : 'Khai Báo Xét Nghiệm Mới'}
+            </h3>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors p-1 rounded-md hover:bg-slate-800"
+            className="text-slate-400 hover:text-white transition-colors p-1 rounded-md hover:bg-slate-800 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -127,31 +114,31 @@ export const AssayModal: React.FC<AssayModalProps> = ({
               value={instrumentId}
               disabled={isEditing}
               onChange={(e) => setInstrumentId(e.target.value)}
-              className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-cyan-500 bg-white"
+              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none bg-white font-medium"
             >
               {instruments.map((inst) => (
                 <option key={inst.id} value={inst.id}>
-                  {inst.name} ({inst.id})
+                  {inst.name}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Mã Xét Nghiệm (Code) (*):
-              </label>
-              <input
-                type="text"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="VD: GLU, CREA, TSH..."
-                className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-cyan-500 font-mono font-bold uppercase"
-                required
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Tên Xét Nghiệm (*):
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="VD: Glucose, Creatinine, AST, ALT, TSH..."
+              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
+              required
+            />
+          </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Đơn Vị Đo (Unit) (*):
@@ -160,28 +147,12 @@ export const AssayModal: React.FC<AssayModalProps> = ({
                 type="text"
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
-                placeholder="VD: mmol/L, µmol/L, g/L, U/L..."
-                className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-cyan-500 font-mono"
+                placeholder="VD: mmol/L, µmol/L, U/L..."
+                className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none font-mono"
                 required
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Tên Đầy Đủ Xét Nghiệm (*):
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="VD: Glucose (Đường máu), Creatinine huyết thanh..."
-              className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-cyan-500"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Loại Mẫu Bệnh Phẩm:
@@ -189,7 +160,7 @@ export const AssayModal: React.FC<AssayModalProps> = ({
               <select
                 value={sampleType}
                 onChange={(e) => setSampleType(e.target.value as any)}
-                className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-cyan-500 bg-white"
+                className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none bg-white font-medium"
               >
                 <option value="SERUM">Huyết thanh (Serum)</option>
                 <option value="PLASMA">Huyết tương (Plasma)</option>
@@ -197,7 +168,9 @@ export const AssayModal: React.FC<AssayModalProps> = ({
                 <option value="URINE">Nước tiểu (Urine)</option>
               </select>
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Số Chữ Số Thập Phân:
@@ -205,7 +178,7 @@ export const AssayModal: React.FC<AssayModalProps> = ({
               <select
                 value={decimalPlaces}
                 onChange={(e) => setDecimalPlaces(parseInt(e.target.value, 10))}
-                className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-cyan-500 bg-white"
+                className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none bg-white font-medium"
               >
                 <option value={0}>0 chữ số (vd: 125)</option>
                 <option value={1}>1 chữ số (vd: 12.5)</option>
@@ -213,12 +186,10 @@ export const AssayModal: React.FC<AssayModalProps> = ({
                 <option value={3}>3 chữ số (vd: 0.125)</option>
               </select>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Tổng Sai Số Cho Phép TEa (%):
+                Sai Số Cho Phép TEa (%):
               </label>
               <div className="relative">
                 <input
@@ -228,28 +199,12 @@ export const AssayModal: React.FC<AssayModalProps> = ({
                   max="100"
                   value={cliaTeaPercent}
                   onChange={(e) => setCliaTeaPercent(parseFloat(e.target.value) || 10)}
-                  placeholder="VD: 10.0"
-                  className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-cyan-500 font-mono font-bold"
+                  placeholder="10.0"
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none font-mono font-bold pr-8"
                   required
                 />
-                <span className="absolute right-3 top-1.5 text-xs text-slate-600">%</span>
+                <span className="absolute right-3 top-2 text-xs text-slate-500 font-bold">%</span>
               </div>
-              <span className="text-[10px] text-slate-600 block mt-0.5">
-                Theo CLIA / Ricos / Quyết định 2429
-              </span>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Phương Pháp Xét Nghiệm:
-              </label>
-              <input
-                type="text"
-                value={method}
-                onChange={(e) => setMethod(e.target.value)}
-                placeholder="VD: Hexokinase, Enzymatic, ECLIA..."
-                className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-cyan-500"
-              />
             </div>
           </div>
 
@@ -257,16 +212,16 @@ export const AssayModal: React.FC<AssayModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-md transition-colors flex items-center gap-1.5 shadow-sm"
+              className="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Check className="w-4 h-4" />
-              {isEditing ? 'Lưu Xét Nghiệm' : 'Khai Báo Xét Nghiệm'}
+              <span>{isEditing ? 'Lưu Xét Nghiệm' : 'Khai Báo Xét Nghiệm'}</span>
             </button>
           </div>
         </form>
